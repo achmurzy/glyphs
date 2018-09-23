@@ -1,46 +1,32 @@
 import * as d3 from 'd3';
 
-//props: x, y, width, height, scale, color, inspect, rate, speed
-export function DrawParameters(props)
+//This class will need to be refactored as a series of input components defining
+//the sliders for interacting with generator parameters. See 'addSlider' and 'addToggle' methods
+/*export default class DrawParameters
 {
-	/*this.x = x;
-	this.y = y;
-	this.boxScale = scale;
-    this.boxColor = color;
-    this.width = width;
-    this.height = height;
-    this.inspectScale = inspect;
-    //this.generationTime = rate;
-    //this.drawDuration = speed;*/
+    constructor(x, y, width, height, glyphScale, boxScale, color, inspect, rate, speed)
+    {
+        this.x = x;
+        this.y = y;
+        this.boxScale = scale;
+        this.boxColor = color;
+        this.width = width;
+        this.height = height;
+        this.inspectScale = inspect;
+        //this.generationTime = rate;
+        //this.drawDuration = speed;
 
-    this.xScale = d3.scaleLinear()
-                .domain([0, GLYPH_SCALE])
-                .range([0, this.boxScale]);
-    this.yScale = d3.scaleLinear()
-                .domain([0, GLYPH_SCALE])
-                .range([0, this.boxScale]);
+        
 
-    this.glyphsX = function() { return this.width / this.boxScale; };
-    this.glyphsY = function() { return this.height / this.boxScale; };
-    this.glyphCount = this.glyphsX()*this.glyphsY();
 
-    if(this.inspectScale > this.glyphsX())
-    	this.inspectScale = this.glyphsX();
+        
 
-    this.gScaleX = d3.scaleLinear()
-	    .domain([0, this.glyphsX()])
-	    .range([0, this.width]);
-
-	this.gScaleY = d3.scaleLinear()
-	    .domain([0, this.glyphsY()])
-	    .range([0, this.height]);
-
-    
-
-    this.panelWidth = 2*this.boxScale;
+        
+    }
+	
 }
 
-DrawParameters.prototype.createButton = function(panel)
+createButton(panel)
 {
     var _this = this;
     this.parameterShow = true;
@@ -245,4 +231,4 @@ function paramEdit(element, event, param, panel, scaleP)
         d3.select(element).attr("cx", event.x);
         panel.generator[param] = scaleP(event.x);
     }
-}
+}*/

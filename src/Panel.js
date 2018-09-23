@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import * as d3 from 'd3';
 
+import Glyph from './Glyph'
+import {glyphToStrokes} from './orthographer'
+
 export default class Panel extends Component
 {
 
@@ -8,8 +11,36 @@ export default class Panel extends Component
 	constructor(props)
 	{
 		super(props)
-		const MAX_GLYPHS = this.props.drawParams.glyphCount*3;
-		this.state = 
+
+    this.glyphsX = function() { return this.props.width / this.props.boxScale; };
+    this.glyphsY = function() { return this.props.height / this.props.boxScale; };
+    
+    this.glyphCount = this.glyphsX()*this.glyphsY();
+    const MAX_GLYPHS = this.glyphCount*3;
+
+    if(this.props.inspectScale > this.glyphsX())
+        this.props.inspectScale = this.glyphsX();
+
+    this.xScale = d3.scaleLinear()
+                    .domain([0, this.props.glyphScale])
+                    .range([0, this.props.boxScale]);
+    this.yScale = d3.scaleLinear()
+                .domain([0, this.props.glyphScale])
+                .range([0, this.props.boxScale]);  
+
+    this.gScaleX = d3.scaleLinear()
+        .domain([0, this.glyphsX()])
+        .range([0, this.props.width]);
+
+    this.gScaleY = d3.scaleLinear()
+        .domain([0, this.glyphsY()])
+        .range([0, this.props.height]);
+
+    this.panelWidth = 2*this.props.boxScale;
+
+    this.glyphCounter = 0;
+    this.generator = this.props.glyphs;
+		this.state = //State is reserved for elements which trigger re-rendering of components
 		{
 			glyphData: [],
 			windowData: [],
@@ -17,10 +48,10 @@ export default class Panel extends Component
 			
 			glyphWindow: 0,
 			group: d3.select("g").attr("transform", 
-"translate("+this.props.drawParams.x+","+this.props.drawParams.y+")"),
+      "translate("+this.props.x+","+this.props.y+")"),
 			
 			fullClick: false,
-			fullButton: this.group.append("rect")
+			/*fullButton: this.group.append("rect")
 				.attr("x", 0)
 				.attr("y", this.drawParams.boxScale)
 				.attr("width", this.drawParams.boxScale)
@@ -45,50 +76,164 @@ export default class Panel extends Component
 		                }
 					}
 					
-				}),
-			glyphCounter: 0,
+				}),*/
 			expandedElement: Number.MAX_SAFE_INTEGER,
-			lastExpanded: this.state.expandedElement,
-			inspect: true,
-
-			lastTime: 0,
-			totalTime: 0.1,
-			stopTime: 0,
-
-			clicked: false,
-    		clickLength: 350, //milliseconds
-		}
-
-		this.glyphsFull = function() 
-    	{ return this.MAX_GLYPHS === this.glyphData.length; };
-
-    	this.addGlyph = function(glyph)  
-		{
-		    this.glyphData.push(glyphToStrokes(glyph));
-		    this.glyphCounter++;   
 		};
 
-		var timeCall = function()
-		{ 
-			_this.totalTime += (d3.now() - _this.lastTime);
-	 		_this.lastTime = d3.now(); 
-      
-      		if(!_this.glyphsFull())
-	 		{
-        		var glyph = _this.generator.generateGlyph(_this.glyphCounter);
-        		_this.addGlyph(glyph);
-      		}  
-      
-			if(_this.windowData.length < _this.drawParams.glyphCount)
-		    {
-		      _this.windowData.push(_this.glyphData[_this.windowData.length+_this.glyphWindow]);
-		      _this.update();
-		    }
-	 	};
+    this.lastTime = 0;
+    this.totalTime = 0.1;
+    this.stopTime = 0;
 
-		this.timer = d3.interval(timeCall, this.drawParams.generationTime);
+    var _this = this;
+    var timeCall = function(elapsed)  //Callback controlling generation of new glyphs
+    { 
+      _this.totalTime += (d3.now() - _this.lastTime);
+      _this.lastTime = d3.now(); 
+      if(elapsed > _this.props.rate)
+      {
+        if(!_this.glyphsFull())
+        {
+            var glyph = _this.generator.generateGlyph(_this.glyphCounter);
+            _this.addGlyph(glyph);
+        }  
+        
+        if(_this.state.windowData.length < _this.glyphCount)
+        {
+          //_this.state.windowData.push(_this.glyphData[_this.windowData.length+_this.glyphWindow]);
+          //this.update();
+        }  
+      }
+    }
+
+    this.timer = d3.interval(timeCall, this.props.rate);
+
+    this.lastExpanded= Number.MAX_SAFE_INTEGER;
+    this.clicked = false;
+    this.clickLength = 350;
+    this.inspect = true;
+
+    this.glyphsFull = function() 
+    { return MAX_GLYPHS === this.state.glyphData.length; };
+
+    this.addGlyph = function(glyph)  
+    {
+        this.setState(prevState => ({glyphData: [...prevState.glyphData, glyphToStrokes(glyph)]}));
+        this.glyphCounter++;   
+    };
+  }
+
+
+//General update pattern
+/*shouldComponentUpdate() = function() 
+{ 
+  //Use glyph index as a key function to uniquely identify glyphs
+  var glyphs = this.group.selectAll("g."+this.name).data(this.windowData, function(d, i) 
+          { if(d === undefined) console.log("Undefined: "+i); else return d.index; });
+
+    //Exit
+    glyphs.exit().remove();
+
+    //Update
+    glyphs.attr("class", this.name);
+    glyphs.selectAll("rect")
+          .attr("class", "update");
+          
+    //Enter
+    enterGlyphs = glyphs.enter()
+          .append("g")
+            .attr("class", this.name)
+            .attr("transform", function(d, i) { return _this.positionGlyph(i, _this.expandedElement); });
+    enterGlyphs.append("rect")
+        .attr("class", "enter")
+          .attr("x", 0)
+          .attr("y", function(d, i) { return 0; })
+          .attr("width", this.drawParams.boxScale)
+          .attr("height", this.drawParams.boxScale)
+          .attr("stroke", 'gray')
+          .style("stroke-opacity", 0.15)
+          .style("stroke-weight", 0.15)
+          .style("fill-opacity", 0.2)
+          .on("click", function(d, i) //Callbacks store references "as-is"
+            { 
+              var gElement = this.parentNode;
+              if(_this.inspect)
+                _this.clickFunction(d, i, gElement, partial(_this.doubleClickSemantics, _this, gElement));
+            }).transition()
+              .duration(function(d) 
+                { return d3.select(this.parentNode).datum().strokes.length * _this.drawParams.drawDuration; })
+              .style("fill-opacity", 0.2);
+
+    var strokes = glyphs.merge(enterGlyphs).selectAll("path").data(function(d, i) { return d.strokes; });
+
+    //Enter update - stroke-by-stroke render
+    strokes.enter()
+      .append("path")  
+        .attr("class", "undrawn")
+        .style("fill-opacity", 0)      
+        .style("stroke-opacity", 0)
+        .attr("d", function(d) { return strokeInterpret(d.contours, _this.drawParams.xScale, _this.drawParams.yScale); })
+        .style("stroke-dasharray", function(d) 
+          { return this.getTotalLength(); })
+        .style("stroke-dashoffset", function(d) 
+          { return this.getTotalLength(); })
+        .transition()
+          .duration(this.drawParams.drawDuration)
+          .delay(function(d, i) { return _this.drawParams.drawDuration * i; })
+          .ease(d3.easeLinear)
+          .style("fill", this.drawParams.boxColor)
+          .style("fill-opacity", 1)
+          .style("stroke", "gray")
+          .style("stroke-weight", 0.1)
+          .style("stroke-opacity", 0.1)
+          .style("stroke-dashoffset", function(d) 
+          { return 0+"px"; })
+          .on("end", function() { d3.select(this).attr("class", "drawn"); });
+
+    //Responsible for initializing glyph points for editing
+    if(this.INIT_DATA)
+      initGlyphData(enterGlyphs, _this.drawParams.xScale, _this.drawParams.yScale, _this);
+
+    if(this.windowData.length === this.drawParams.glyphCount)
+    {
+      this.showFullButton(this.drawParams.glyphCount-1);
+    }
+};*/
+
+  render()  //Render the panel as a list of glyphs
+  {
+    const glyphs = this.state.glyphData;
+    return (<g transform={"translate("+this.props.x+","+this.props.y+")"}>
+                {glyphs.map((glyph) => //Cannot use index as key in the long term - Will also need to pass strokes in as Props
+                  <Glyph key={glyph.index} transform={this.positionGlyph(glyph.index, this.expandedElement)} boxScale={this.props.boxScale} color={this.props.color}
+                          xScale={this.xScale} yScale={this.yScale} strokes={glyph.strokes}/>
+                )}
+            </g>);
+  }
+
+  positionGlyph(index, element)
+  {
+    var offset = 0;
+    if(element !== Number.MAX_SAFE_INTEGER && index > element)
+    {
+      var columnNumber = (element) % this.glyphsX();
+      var emptyColumns = this.props.inspectScale - (this.glyphsX() - columnNumber);
+      if(emptyColumns < 0)
+        emptyColumns = 0;
+      var boundaryIndex = Math.floor((index - element - 1) / 
+        (this.glyphsX() - (this.props.inspectScale - emptyColumns)))+1;
+      if(boundaryIndex > this.props.inspectScale)
+        boundaryIndex = this.props.inspectScale;
+
+      offset = (boundaryIndex * (this.inspectScale - emptyColumns)) - 1;
+    }
+
+    var gY = Math.floor((index+offset) / this.glyphsX());
+    var gX = (offset+index) - (gY * this.glyphsX());
+
+    return "translate(" + this.gScaleX(gX) + "," + this.gScaleY(gY) + ") scale(1,1)";
+  };
 		
-		this.drawParams.createButton(this);
+		/*this.drawParams.createButton(this);
 
 		//Might need to place d3 statements into render()
 		this.group.append("line")
@@ -112,9 +257,8 @@ export default class Panel extends Component
 							.attr("x2", this.drawParams.boxScale - this.drawParams.boxScale/4)
 							.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
               .style("stroke-width", 0.5);
-	}
-
-	toggleGeneration = function ()
+  
+  toggleGeneration = function ()
 	  {
 	  	if(this.totalTime > this.stopTime)
 	  		this.timer.stop();
@@ -184,82 +328,6 @@ export default class Panel extends Component
     };
 }
 
-//General update pattern
-Panel.prototype.update = function() 
-{ 
-	//A common practice where call-backs, anonymous functions are embedded in a local
-	//scope where this may have an important meaning that needs to be preserved
-	var _this = this;
-
-	//Use glyph index as a key function to uniquely identify glyphs
-  var glyphs = this.group.selectAll("g."+this.name).data(this.windowData, function(d, i) 
-          { if(d === undefined) console.log("Undefined: "+i); else return d.index; });
-
-    glyphs.exit().remove();
-
-    glyphs.attr("class", this.name);
-    glyphs.selectAll("rect")
-          .attr("class", "update");
-          
-    enterGlyphs = glyphs.enter()
-          .append("g")
-          	.attr("class", this.name)
-            .attr("transform", function(d, i) { return _this.positionGlyph(i, _this.expandedElement); });
-    enterGlyphs.append("rect")
-    		.attr("class", "enter")
-          .attr("x", 0)
-          .attr("y", function(d, i) { return 0; })
-          .attr("width", this.drawParams.boxScale)
-          .attr("height", this.drawParams.boxScale)
-          .attr("stroke", 'gray')
-          .style("stroke-opacity", 0.15)
-          .style("stroke-weight", 0.15)
-          .style("fill-opacity", 0.2)
-          .on("click", function(d, i) //Callbacks store references "as-is"
-            { 
-            	var gElement = this.parentNode;
-            	if(_this.inspect)
-            		_this.clickFunction(d, i, gElement, partial(_this.doubleClickSemantics, _this, gElement));
-            }).transition()
-          		.duration(function(d) 
-          			{ return d3.select(this.parentNode).datum().strokes.length * _this.drawParams.drawDuration; })
-          		.style("fill-opacity", 0.2);
-
-    var strokes = glyphs.merge(enterGlyphs).selectAll("path").data(function(d, i) { return d.strokes; });
-
-    //Enter update - stroke-by-stroke render
-    strokes.enter()
-      .append("path")  
-        .attr("class", "undrawn")
-        .style("fill-opacity", 0)      
-        .style("stroke-opacity", 0)
-        .attr("d", function(d) { return strokeInterpret(d.contours, _this.drawParams.xScale, _this.drawParams.yScale); })
-        .style("stroke-dasharray", function(d) 
-          { return this.getTotalLength(); })
-        .style("stroke-dashoffset", function(d) 
-          { return this.getTotalLength(); })
-        .transition()
-          .duration(this.drawParams.drawDuration)
-          .delay(function(d, i) { return _this.drawParams.drawDuration * i; })
-          .ease(d3.easeLinear)
-          .style("fill", this.drawParams.boxColor)
-          .style("fill-opacity", 1)
-          .style("stroke", "gray")
-          .style("stroke-weight", 0.1)
-          .style("stroke-opacity", 0.1)
-          .style("stroke-dashoffset", function(d) 
-          { return 0+"px"; })
-          .on("end", function() { d3.select(this).attr("class", "drawn"); });
-
-    //Responsible for initializing glyph points for editing
-    if(this.INIT_DATA)
-      initGlyphData(enterGlyphs, _this.drawParams.xScale, _this.drawParams.yScale, _this);
-
-    if(this.windowData.length === this.drawParams.glyphCount)
-    {
-      this.showFullButton(this.drawParams.glyphCount-1);
-    }
-};
 
 //Factored click function with click/double-click semantics
 Panel.prototype.clickFunction = function(d, i, gElement, dblClick) //if this can be referred to directly, it should be
@@ -412,29 +480,6 @@ Panel.prototype.toggleGlyphData = function(glyph, up)
 
 };
 
-  Panel.prototype.positionGlyph = function(index, element)
-  {
-  	var offset = 0;
-  	if(element != Number.MAX_SAFE_INTEGER && index > element)
-  	{
-  		var columnNumber = (element) % this.drawParams.glyphsX();
-		var emptyColumns = this.drawParams.inspectScale - (this.drawParams.glyphsX() - columnNumber);
-		if(emptyColumns < 0)
-			emptyColumns = 0;
-      var boundaryIndex = Math.floor((index - element - 1) / 
-      	(this.drawParams.glyphsX() - (this.drawParams.inspectScale - emptyColumns)))+1;
-      if(boundaryIndex > this.drawParams.inspectScale)
-      	boundaryIndex = this.drawParams.inspectScale;
-
-      offset = (boundaryIndex * (this.drawParams.inspectScale - emptyColumns)) - 1;
-  	}
-
-    var gY = Math.floor((index+offset) / this.drawParams.glyphsX());
-    var gX = (offset+index) - (gY * this.drawParams.glyphsX());
-
-    return "translate(" + this.drawParams.gScaleX(gX) + "," + this.drawParams.gScaleY(gY) + ") scale(1,1)";
-  };
-
   //Adds false glyphs to make room for expanded element
   Panel.prototype.expand = function(i, panel)
   {  
@@ -486,4 +531,5 @@ Panel.prototype.toggleGlyphData = function(glyph, up)
     
     this.update();
     //this.showFullButton(this.drawParams.glyphCount-1);
-  };
+  };*/
+}
