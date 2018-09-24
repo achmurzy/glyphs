@@ -14,11 +14,24 @@ export default class Stroke extends Component
 		this.path = React.createRef();		
 	}
 
-	//Need to draw the 'strokes' prop. Two approaches: Use d3 commands and pass the DOM to render()
-	//Define paths with React and render(), specify animation/interaction with d3. 
 	componentDidMount() //React callbacks delimit d3 logic in most cases
 	{
+		var _this = this;
 		this.setState(prevState => ({dashArray: this.path.current.getTotalLength(), dashOffset: this.path.current.getTotalLength()}));
+		d3.select(this.path.current)
+			.transition()
+				.duration(this.props.drawSpeed)
+				.delay(function(d, i) { return _this.props.drawSpeed * i; })
+		          .ease(d3.easeLinear)
+		          .style("fill", this.props.color)
+		          .style("fill-opacity", 1)
+		          .style("stroke", "gray")
+		          .style("stroke-weight", 0.1)
+		          .style("stroke-opacity", 0.1)
+		          .style("stroke-dashoffset", function(d) 
+		          { return 0+"px"; })
+		          .on("end", function() { d3.select(this).attr("class", "drawn"); });
+
 	}
 
 	render()

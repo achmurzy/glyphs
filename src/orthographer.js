@@ -78,6 +78,63 @@ export function glyphToStrokes(glyphData)
   return glyphObject;
 }
 
+//Transfer elements to the alphabet panel and disable inappropriate callbacks
+export function alphabetize(gElement)
+{
+  //if(alphabetPanel.glyphData.length > 0)
+  //  alphabetPanel.hideFullButton(alphabetPanel.glyphData.length-1);
+  /*var glyphElement = d3.select(gElement);
+  alphabetPanel.group.append(function() { return gElement; });
+  alphabetPanel.glyphData.push(glyphElement.datum());
+
+  alphabetPanel.group.select("g.draw").attr("class", "font").select("rect").on("click", function(d, i)
+    { 
+      var gElement = this.parentNode;           //Pass function reference with list of arguments
+      alphabetPanel.clickFunction(d, i, gElement, partial(function(ap, i)
+        {
+          if(alphabetPanel.glyphData.length === i)
+            alphabetPanel.hideFullButton(alphabetPanel.glyphData.length-1);
+          d3.select(gElement).remove();
+          alphabetPanel.removeGlyph(ap, i); 
+          if(alphabetPanel.glyphData.length === i)
+            alphabetPanel.showFullButton(alphabetPanel.glyphData.length-1);          
+        }, alphabetPanel, alphabetPanel.glyphData.length-1)); //position is length of current dataset
+    }).attr("fill", 'gray');
+  
+  var startTransform = parseTransform(glyphElement.attr("transform"));
+  var endTransform = alphabetPanel.collapse(alphabetPanel.glyphData.length - 1, alphabetPanel);
+
+  glyphElement.transition()
+  .attrTween("transform", function(t)
+      {
+        return function(t)
+        { 
+          return interpolateTransform(t, startTransform, endTransform);
+        };
+      });
+  alphabetPanel.showFullButton(alphabetPanel.glyphData.length-1);*/
+}
+
+export function interpolateTransform(t, startT, endT)
+{
+  var is = d3.interpolateNumber(startT.scale[0], endT.scale[0]);
+  var tsx = d3.interpolateNumber(startT.translate[0], endT.translate[0]);
+  var tsy = d3.interpolateNumber(startT.translate[1], endT.translate[1]);
+  
+  return "translate("+tsx(t)+","+tsy(t)+"),scale("+is(t)+","+is(t)+")";
+}
+
+export function parseTransform (a)
+{
+  var b={};
+  for (var i in a = a.match(/(\w+\((\-?\d+\.?\d*e?\-?\d*,?)+\))+/g))
+  {
+      var c = a[i].match(/[\w\.\-]+/g);
+      b[c.shift()] = c;
+  }
+  return b;
+}
+
       //Cut glyphs into strokes separated by 'M' symbols
       function glyphsToStrokes(glyphData)
       {
@@ -122,26 +179,6 @@ export function glyphToStrokes(glyphData)
         }
       }
 
-      function interpolateTransform(t, startT, endT)
-      {
-        var is = d3.interpolateNumber(startT.scale[0], endT.scale[0]);
-        var tsx = d3.interpolateNumber(startT.translate[0], endT.translate[0]);
-        var tsy = d3.interpolateNumber(startT.translate[1], endT.translate[1]);
-        
-        return "translate("+tsx(t)+","+tsy(t)+"),scale("+is(t)+","+is(t)+")";
-      }
-
-      function parseTransform (a)
-      {
-        var b={};
-        for (var i in a = a.match(/(\w+\((\-?\d+\.?\d*e?\-?\d*,?)+\))+/g))
-        {
-            var c = a[i].match(/[\w\.\-]+/g);
-            b[c.shift()] = c;
-        }
-        return b;
-      }
-
       //Helper for anonymously calling methods with a list of arguments
       function partial(func /*, 0..n args */) 
       {
@@ -150,241 +187,6 @@ export function glyphToStrokes(glyphData)
           var allArguments = args.concat(Array.prototype.slice.call(arguments));
           return func.apply(this, allArguments);
         };
-      }
-
-      //Transfer elements to the alphabet panel and disable inappropriate callbacks
-      /*function alphabetize(gElement)
-      {
-        //if(alphabetPanel.glyphData.length > 0)
-        //  alphabetPanel.hideFullButton(alphabetPanel.glyphData.length-1);
-        var glyphElement = d3.select(gElement);
-        alphabetPanel.group.append(function() { return gElement; });
-        alphabetPanel.glyphData.push(glyphElement.datum());
-   
-        alphabetPanel.group.select("g.draw").attr("class", "font").select("rect").on("click", function(d, i)
-          { 
-            var gElement = this.parentNode;           //Pass function reference with list of arguments
-            alphabetPanel.clickFunction(d, i, gElement, partial(function(ap, i)
-              {
-                if(alphabetPanel.glyphData.length === i)
-                  alphabetPanel.hideFullButton(alphabetPanel.glyphData.length-1);
-                d3.select(gElement).remove();
-                alphabetPanel.removeGlyph(ap, i); 
-                if(alphabetPanel.glyphData.length === i)
-                  alphabetPanel.showFullButton(alphabetPanel.glyphData.length-1);          
-              }, alphabetPanel, alphabetPanel.glyphData.length-1)); //position is length of current dataset
-          }).attr("fill", 'gray');
-        
-        var startTransform = parseTransform(glyphElement.attr("transform"));
-        var endTransform = alphabetPanel.collapse(alphabetPanel.glyphData.length - 1, alphabetPanel);
-
-        glyphElement.transition()
-        .attrTween("transform", function(t)
-            {
-              return function(t)
-              { 
-                return interpolateTransform(t, startTransform, endTransform);
-              };
-            });
-        alphabetPanel.showFullButton(alphabetPanel.glyphData.length-1);
-      }*/
-
-      function initGlyphData(glyphs, x, y, panel)
-      {
-              //Draw stroke elements for interactive editing
-        var startPoints = glyphs.selectAll("circle.start").data(function(d, i)
-                            { return d.strokes; })
-            .attr("cx", function(d) { return x(d.start.x); })
-            .attr("cy", function(d) { return y(d.start.y); });
-        startPoints.enter()
-          .append("circle")
-            .attr("class", "start")
-            .attr("cx", function(d) { return x(d.start.x); })
-            .attr("cy", function(d) { return y(d.start.y); })
-            .attr("r", 0)
-            .style("fill", function(d) { return d.color; })
-            .style("stroke", 'black')
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) { dragFunction(this, d3.event, i, x, y, panel); }))
-            .on("click", function(d)
-              {
-                editFunction();
-              });
-
-        var endPoints = glyphs.selectAll("circle.end").data(function(d, i)
-                            { return d.strokes; })
-            .attr("cx", function(d) { return x(d.end.x); })
-            .attr("cy", function(d) { return y(d.end.y); });
-        endPoints.enter()
-          .append("circle")
-            .attr("class", "end")
-            .attr("cx", function(d) { return x(d.end.x); })
-            .attr("cy", function(d) { return y(d.end.y); })
-            .attr("r", 0)
-            .style("fill", function(d) { return d.color; })
-            .style("stroke", 'black')
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) { dragFunction(this, d3.event, i, x, y, panel); }))
-            .on("click", function(d)
-              {
-                editFunction();
-              });
-
-        //Select cubic and quadratic strokes
-        var controlPoints1 = glyphs.selectAll("circle.cp1").data(function(d, i)
-                            { 
-                              var qcCollect = [];
-                              for(var i = 0; i < d.strokes.length; i++) 
-                              {
-                                if(d.strokes[i].type === 'Q' || d.strokes[i].type === 'C')
-                                {
-                                  d.strokes[i].index = i;
-                                  qcCollect.push(d.strokes[i]);
-                                }                               }
-                              return qcCollect; 
-                            })
-            .attr("cx", function(d) { return x(d.cp1.x); })
-            .attr("cy", function(d) { return y(d.cp1.y); });
-        controlPoints1.enter()
-          .append("circle")
-            .attr("class", "cp1")
-            .attr("cx", function(d) { return x(d.cp1.x); })
-            .attr("cy", function(d) { return y(d.cp1.y); })
-            .attr("r", 0)
-            .style("fill", function(d) { return d.color; })
-            .style("stroke", 'white')
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) { dragFunction(this, d3.event, d.index, x, y, panel); }))
-            .on("click", function(d)
-              {
-                editFunction();
-              });
-
-        //Select cubic strokes
-        var controlPoints2 = glyphs.selectAll("circle.cp2").data(function(d, i)
-                            {                               
-                              var cCollect = [];
-                              for(var i = 0; i < d.strokes.length; i++) 
-                              {
-                                if(d.strokes[i].type === 'C')
-                                {
-                                  d.strokes[i].index = i;
-                                  cCollect.push(d.strokes[i]);
-                                }
-                              }
-                              return cCollect; })
-            .attr("cx", function(d) { return x(d.cp2.x); })
-            .attr("cy", function(d) { return y(d.cp2.y); });
-        controlPoints2.enter()
-          .append("circle")
-            .attr("class", "cp2")
-            .attr("cx", function(d) { return x(d.cp2.x); })
-            .attr("cy", function(d) { return y(d.cp2.y); })
-            .attr("r", 0)
-            .style("fill", function(d) { return d.color; })
-            .style("stroke", 'white')
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) { dragFunction(this, d3.event, d.index, x, y, panel); }))
-            .on("click", function(d)
-              {
-                editFunction();
-              });
-
-        var boundingLines = glyphs.selectAll("line.bounds").data(function(d, i) 
-                              { var box = d.glyph.path.getBoundingBox();
-                               var lines = [];
-                               lines.push([new Victor(box.x1, box.y1), new Victor(box.x1, box.y2)]);
-                               lines.push([new Victor(box.x1, box.y1), new Victor(box.x2, box.y1)]);
-                               lines.push([new Victor(box.x2, box.y1), new Victor(box.x2, box.y2)]);
-                               lines.push([new Victor(box.x1, box.y2), new Victor(box.x2, box.y2)]); 
-                                return lines; })
-            .attr("x1", function(d) { return x(d[0].x) })
-            .attr("y1", function(d) { return y(GLYPH_SCALE - d[0].y) })
-            .attr("x2", function(d) { return x(d[1].x) })
-            .attr("y2", function(d) { return y(GLYPH_SCALE - d[1].y) });
-        boundingLines.enter()
-          .append("line")
-            .attr("class", "bounds")
-            .attr("x1", function(d) { return x(d[0].x) })
-            .attr("y1", function(d) { return y(GLYPH_SCALE - d[0].y) })
-            .attr("x2", function(d) { return x(d[1].x) })
-            .attr("y2", function(d) { return y(GLYPH_SCALE - d[1].y) })
-            .style("stroke-width", 0)
-            .style("stroke-opacity", 1)
-            .style("stroke-dasharray", 1);
-
-        var boxDrag = glyphs.select("circle.bbox");
-        if(boxDrag._groups[0][0] === undefined)
-        {
-          glyphs.append("circle")
-            .attr("class", "bbox")
-            .attr("cx", function(d) { return x(d.glyph.path.getBoundingBox().x1) })
-            .attr("cy", function(d) { return y(GLYPH_SCALE-d.glyph.path.getBoundingBox().y1) })
-            .attr("r", 0)
-            .style("fill", "black")
-            .style("stroke", "white")
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) { dragFunction(this, d3.event, d.index, x, y, panel); }))
-            .on("click", function(d)
-              {
-                editFunction();
-              });
-        }
-        else
-        {
-          boxDrag.attr("cx", function(d) { return x(d.glyph.path.getBoundingBox().x1) })
-            .attr("cy", function(d) { return y(GLYPH_SCALE-d.glyph.path.getBoundingBox().y1) });
-        } 
-
-        var aWidth = glyphs.select("circle.awidth");
-        var aLine = glyphs.select("line.aWidth");
-        if(aWidth._groups[0][0] === undefined)
-        {
-          glyphs.append("circle")
-            .attr("class", "awidth")
-            .attr("cx", function(d) { return x(d.glyph.path.getBoundingBox().x2); })
-            .attr("cy", function(d) { return panel.drawParams.boxScale; })
-            .attr("r", 0)
-            .style("fill", "white")
-            .style("stroke", "black")
-            .style("stroke-width", 0.5)
-            .style("stroke-opacity", 1)
-            .call(d3.drag().on("drag", function(d, i) 
-              { dragFunction(this, d3.event, d.index, x, y, panel); })
-                .on("start", function(d) {
-                  glyphs.select("line.awidth").style("stroke-width", 0.1);  
-                })
-                .on("end", function(d)
-                {
-                  glyphs.select("line.awidth").style("stroke-width", 0);
-                }))
-            .on("click", function(d)
-              {
-                //Tell difference between click down and up?
-                editFunction();
-              });
-
-           glyphs.append("line")
-            .attr("class", "awidth")
-            .attr("x1", function(d) { return x(d.glyph.path.getBoundingBox().x2); })
-            .attr("y1", function(d) { return panel.drawParams.boxScale; })  
-            .attr("x2", function(d) { return x(d.glyph.path.getBoundingBox().x2); })
-            .attr("y2", 0)
-            .style("stroke-width", 0)
-            .style("stroke-opacity", 1)
-            .style("stroke-dasharray", 1);
-        }
-        else if(aWidth.attr("cx") < x(aWidth.datum().glyph.path.getBoundingBox().x2))
-        {
-          aWidth.attr("cx", function(d) { return x(d.glyph.path.getBoundingBox().x2); });
-          aLine.attr("x1", function(d) { return x(d.glyph.path.getBoundingBox().x2); })
-          .attr("x2", function(d) { return x(d.glyph.path.getBoundingBox().x2); });
-        }
       }
 
       function editFunction()
@@ -503,7 +305,7 @@ export function glyphToStrokes(glyphData)
               .data(function(d, i) { return d.strokes; })
                 .attr("d", function(d) 
                 { var newPath = strokeInterpret(d.contours, x, y); return newPath; });
-            initGlyphData(transGlyph, x, y, panel);
+            //initGlyphData(transGlyph, x, y, panel);
           break;
           default:
             console.log("Point type not recognized");

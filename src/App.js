@@ -15,7 +15,7 @@ var BOX_SCALE = 50;
 var colors = ["green", "red", "cyan", "magenta", "yellow"];
 var INSPECT_SCALE = 4;      
 var GENERATION_RATE = 20;
-var DRAW_SPEED = 100;
+var DRAW_SPEED = 500;
 
 var margin = {top: 40, right: 40, bottom: 40, left: 40},
                       mWidth = 1200, 
@@ -62,7 +62,7 @@ class App extends Component {
               width={mWidth}
               height={mHeight}>
           <Panel 
-            name = "Draw"
+            name = "draw"
             x = {0} y = {0} 
             width = {PANEL_WIDTH} 
             height = {PANEL_HEIGHT} 
@@ -75,7 +75,7 @@ class App extends Component {
             glyphs = {new Generator()}  //Will need to use DrawParams input callbacks to populate parameters here 
           />
           <Panel 
-            name = "Draw"
+            name = "draw"
             x = {0} y = {500} 
             width = {PANEL_WIDTH} 
             height = {PANEL_HEIGHT} 
