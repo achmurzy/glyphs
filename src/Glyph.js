@@ -1,13 +1,21 @@
 import React, { Component } from 'react';
 import * as d3 from 'd3';
+
 import Stroke from './Stroke'
-import {strokeInterpret, interpolateTransform, parseTransform} from './orthographer'
+import {copyStroke, strokeInterpret, interpolateTransform, parseTransform} from './orthographer'
+import {addContour} from './generator'
+
+var opentype = require('opentype.js')
 
 export default class Glyph extends Component
 {
 	constructor(props)
 	{
 		super(props);
+    this.state = 
+    {
+      strokes: this.props.strokes
+    }
 		this.handleClick = this.handleClick.bind(this);
 		this.glyph = React.createRef();
     this.startTransform = this.props.transform;
@@ -15,7 +23,8 @@ export default class Glyph extends Component
 
   componentDidMount()
   {
-    d3.select(this.glyph.current).attr("transform", this.props.transform);
+    var glyphGroup = d3.select(this.glyph.current);
+    glyphGroup.attr("transform", this.props.transform);
   }
 
   componentDidUpdate()
@@ -33,34 +42,76 @@ export default class Glyph extends Component
               return interpolateTransform(t, startTransform, endTransform);
             };
           });
+    if(this.props.inspecting)
+    {
+      groupElement.selectAll("circle.start")
+        .call(d3.drag().on("drag", function(d, i)
+        {
+          _this.dragFunction(this, d3.event, i, _this.props.xScale, _this.props.yScale);
+        }))
+        .on("click", function(d)
+          {
+            _this.editFunction();
+          });
+
+      groupElement.selectAll("circle.end")
+        .call(d3.drag().on("drag", function(d, i)
+        {
+          _this.dragFunction(this, d3.event, i, _this.props.xScale, _this.props.yScale);
+        }))
+        .on("click", function(d)
+          {
+            _this.editFunction();
+          });
+
+      groupElement.selectAll("circle.cp1")
+        .call(d3.drag().on("drag", function(d, i)
+        {
+          _this.dragFunction(this, d3.event, i, _this.props.xScale, _this.props.yScale);
+        }))
+        .on("click", function(d)
+          {
+            _this.editFunction();
+          });
+
+      groupElement.selectAll("circle.cp2")
+        .call(d3.drag().on("drag", function(d, i)
+        {
+          _this.dragFunction(this, d3.event, i, _this.props.xScale, _this.props.yScale);
+        }))
+        .on("click", function(d)
+          {
+            _this.editFunction();
+          });
+    }
   }
 
 	render()
 	{
-		const strokes = this.props.strokes;
+		const strokes = this.state.strokes;
 		return(<g ref={this.glyph} className={this.props.name}>
 				<rect x={0} y={0} width={this.props.boxScale} height={this.props.boxScale} onClick={this.handleClick}
 				stroke="gray" style={{strokeOpacity: 0.15, strokeWeight: 0.15, fillOpacity: 0.2}}/>
-				
-				{this.props.inspecting && //May need to factor these into stroke component, may not
-					strokes.map((stroke, i) => 
-						<g key={i}>
-							<circle cx={this.props.xScale(stroke.start.x)} cy={this.props.yScale(stroke.start.y)} r={1}/>
-							<circle cy={this.props.xScale(stroke.end.x)} cy={this.props.yScale(stroke.end.y)} r={1}/>
-							{(stroke.type === "Q" || stroke.type === "C") &&
-								<circle cx={this.props.xScale(stroke.cp1.x)} cy={this.props.yScale(stroke.cp1.y)} r={1}/>}
-								{stroke.type === "C" &&
-									<circle cx={this.props.xScale(stroke.cp2.x)} cy={this.props.yScale(stroke.cp2.y)} r={1}/>}
-              {}    
-						</g>
-					) 
-				}
+			
 				{strokes.map((stroke, i) =>
 					//{beware of curly braces in map expressions
 						<Stroke key={i} className="undrawn" commands={strokeInterpret(stroke.contours, this.props.xScale, this.props.yScale)} 
-								drawSpeed={this.props.drawSpeed} color={this.props.color}/>
+								drawSpeed={this.props.drawSpeed} color={this.props.inspecting ? stroke.color : this.props.color}/>
 					//}you need to explicitly specify a return value if you use them
 				)}
+        {this.props.inspecting && //May need to factor these into stroke component, may not
+          strokes.map((stroke, i) => 
+            <g key={i}>
+              <circle className="start" cx={this.props.xScale(stroke.start.x)} cy={this.props.yScale(stroke.start.y)} r={1}/>
+              <circle className="end" cx={this.props.xScale(stroke.end.x)} cy={this.props.yScale(stroke.end.y)} r={1}/>
+              {(stroke.type === "Q" || stroke.type === "C") &&
+                <circle className="cp1" cx={this.props.xScale(stroke.cp1.x)} cy={this.props.yScale(stroke.cp1.y)} r={1}/>}
+                {stroke.type === "C" &&
+                  <circle className="cp2" cx={this.props.xScale(stroke.cp2.x)} cy={this.props.yScale(stroke.cp2.y)} r={1}/>}
+              {}    
+            </g>
+          ) 
+        }
 			</g>);
   }
 	
@@ -68,6 +119,109 @@ export default class Glyph extends Component
   {
   	this.props.clickFunction(this.props.index);
   }	
+
+  //Drag detection - click up is "Default behaviour" for click
+  editFunction = function()
+  {
+    if(d3.event.defaultPrevented)   
+    {
+      return;  
+    }
+  }
+
+  dragFunction = function(element, event, index, x, y)
+  {
+    var selection = d3.select(element);
+    var pointType = selection.attr("class");
+    var glyphData = this.props.opentypeGlyph;
+    var opentypePath = glyphData.path;
+
+    //Modify underlying opentype data - be sure to invert to glyph space
+    var idx=0;  
+    var idy=0;
+    if(pointType != "bbox" && pointType != "awidth")
+    {
+      if(event.x > 0  && event.x < this.props.boxScale)
+      {
+        selection.attr("cx", event.x);
+        idx=x.invert(event.dx);
+      }
+      if(event.y > 0 && event.y < this.props.boxScale)
+      {
+        selection.attr("cy", event.y);
+        idy=y.invert(-1*event.dy);
+      }
+    }
+
+    var startIndex = index*5;
+
+    switch(pointType)
+    {
+      case "start":
+        glyphData.strokeData[index].start.x += idx;
+        glyphData.strokeData[index].start.y += idy;
+      break;
+      case "end":
+        glyphData.strokeData[index].end.x += idx;
+        glyphData.strokeData[index].end.y += idy;
+      break;
+      case "cp1":
+        glyphData.strokeData[index].cp1.x += idx;
+        glyphData.strokeData[index].cp1.y += idy;
+      break;
+      case "cp2":
+        glyphData.strokeData[index].cp2.x += idx;
+        glyphData.strokeData[index].cp2.y += idy;
+      break;
+      default:
+        console.log("what you clickin boi");
+    }
+
+    if(pointType !== "bbox" && pointType !== "aWidth")
+    {
+      var gg = glyphData.strokeData[index];
+      var strokeType = gg.type;
+      var stroke;
+      var path = {};
+      var newPath = new opentype.Path();
+      switch(strokeType)
+      {
+        case 'L':
+          stroke = this.props.generator.generateLine(gg.start, gg.end);
+          break;
+        case 'Q':
+          stroke = this.props.generator.generateQuadratic(gg.start, gg.cp1, gg.end);
+          path.cp1Pos = stroke[5];
+          path.cp1Neg =  stroke[6];
+          break;
+        case 'C':
+          stroke = this.props.generator.generateCubic(gg.start, gg.cp1, gg.cp2, gg.end);
+          path.cp1Pos = stroke[5];
+          path.cp1Neg = stroke[6];
+          path.cp2Pos = stroke[7];
+          path.cp2Neg = stroke[8];
+          break;
+        default:
+          console.log("Invalid stroke generation selection");
+      }
+
+      path.type = strokeType;
+      path.startPos = stroke[1];
+      path.startNeg = stroke[2];
+      path.endPos = stroke[3];
+      path.endNeg = stroke[4];
+
+      addContour(path, newPath);
+      for(var i = 0; i < newPath.commands.length; i++)
+      {
+        opentypePath.commands[startIndex+i] = newPath.commands[i];
+      }
+
+      const strokes = this.state.strokes; //May not update due to mutation?
+      copyStroke(glyphData.strokeData[index], opentypePath, strokes[index], index);
+      this.setState({strokes: strokes});
+    }
+  }
 
 	/*initGlyphData = function(glyphs, x, y, panel)
       {

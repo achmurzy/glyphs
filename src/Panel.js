@@ -16,7 +16,7 @@ export default class Panel extends Component
     this.glyphsY = function() { return this.props.height / this.props.boxScale; };
     
     this.glyphCount = this.glyphsX()*this.glyphsY();
-    const MAX_GLYPHS = this.glyphCount*3;
+    const MAX_GLYPHS = this.glyphCount;
 
     if(this.props.inspectScale > this.glyphsX())
         this.props.inspectScale = this.glyphsX();
@@ -43,9 +43,7 @@ export default class Panel extends Component
 		this.state = //State is reserved for elements which trigger re-rendering of components
 		{
 			glyphData: [],
-			windowData: [],
-			initData: true,
-			
+			windowData: [],	
 			glyphWindow: 0,
 			
 			/*fullButton: this.group.append("rect")
@@ -118,7 +116,7 @@ export default class Panel extends Component
     this.glyphsFull = function() 
     { return MAX_GLYPHS === this.state.glyphData.length; };
 
-    this.addGlyph = function(glyph)  
+    this.addGlyph = function(glyph)  //Does this re-render every glyph?
     {
         this.setState(prevState => ({glyphData: [...prevState.glyphData, glyphToStrokes(glyph)]}));
         this.glyphCounter++;   
@@ -166,7 +164,7 @@ export default class Panel extends Component
                   {
                       return (<Glyph key={glyph.index} index={glyph.index} name={this.props.name} transform={this.positionGlyph(i, this.state.expandedElement)} 
                       boxScale={this.props.boxScale} color={this.props.color} xScale={this.xScale} yScale={this.yScale} strokes={glyph.strokes} drawSpeed={this.props.speed} 
-                      inspecting={i===this.state.expandedElement} clickFunction={this.clickFunction}/>);
+                      inspecting={i===this.state.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.glyphs} clickFunction={this.clickFunction}/>);
                   }
                 )}
             </g>);
@@ -174,8 +172,6 @@ export default class Panel extends Component
 
   positionGlyph(index, element)
   {
-    console.log(index);
-    console.log(element);
     var offset = 0;
     var inspectScale = 1;
     if(element !== Number.MAX_SAFE_INTEGER && index >= element)

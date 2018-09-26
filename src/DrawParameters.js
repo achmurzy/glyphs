@@ -1,32 +1,55 @@
+import React, { Component } from 'react';
 import * as d3 from 'd3';
+
+import Generator from './generator';
+import Slider from './Slider'
 
 //This class will need to be refactored as a series of input components defining
 //the sliders for interacting with generator parameters. See 'addSlider' and 'addToggle' methods
-/*export default class DrawParameters
+
+//Will need to move Generator class to here, then directly feed glyph data into the panel
+//Perhaps this component should render the panel, so that the draw parameters can control the 
+//generator and send glyph data to the panel for direct rendering. 
+
+export default class DrawParameters extends React.Component
 {
-    constructor(x, y, width, height, glyphScale, boxScale, color, inspect, rate, speed)
+    constructor(props)
     {
-        this.x = x;
-        this.y = y;
-        this.boxScale = scale;
-        this.boxColor = color;
-        this.width = width;
-        this.height = height;
-        this.inspectScale = inspect;
-        //this.generationTime = rate;
-        //this.drawDuration = speed;
+        super(props);
+        this.state =    //State holds the variables modified by sliders
+        {
+            minStrokes: 1,
+            maxStroke: 5,
+            line: true,
+            quadratic: true,
+            cubic: true,
+            strokeLength: 50,
+            lengthVariance: 0,
+            strokeWidth: 50,
+            widthVariance: 0,
+            connectProbability: 0,
+            trainingDataSize: 100
+        }
+        //this.generator = new Generator(); 
 
-        
-
-
-        
-
-        
     }
+
+    render()
+    {
+        return(
+            <g>
+                <rect x={this.props.x} y={this.props.y} width={this.props.width} height={this.props.height}
+                    style={{fill: this.props.color, fillOpacity: 0.25}}/>
+                <Slider x={this.props.x} y={this.props.y} width={this.props.width}/>
+            </g>
+            );
+    }
+
+    //Callback for sliders to modify a specified value (rather than new methods for every field)
 	
 }
 
-createButton(panel)
+/*createButton(panel)
 {
     var _this = this;
     this.parameterShow = true;

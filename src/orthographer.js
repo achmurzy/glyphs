@@ -2,8 +2,7 @@ import * as d3 from 'd3';
 import {addContour} from './generator'
 
 var Victor = require('victor')
-var opentype = require('opentype.js') //this may not be correct
-
+var opentype = require('opentype.js') 
 
 
 var GLYPH_SCALE = 1024;
@@ -78,6 +77,37 @@ export function glyphToStrokes(glyphData)
   return glyphObject;
 }
 
+//Takes an opentype path commmand and converts to a d3-renderable stroke object
+//This function was factored for use in editing glyphs interactively
+export function copyStroke(stroke, glyphPath, strokeObject, index)
+{
+  strokeObject.contours = [];
+  //Exactly 5 path symbols per stroke: MLXLX, where X is L | Q | C
+  for(var j = 0; j < 5; j++)
+  {
+    var flipPoint = JSON.parse(JSON.stringify(glyphPath.commands[(index*5)+j]));
+    if(flipPoint.type === 'Q' || flipPoint.type === 'C')
+    {
+      flipPoint.y1 = MirrorY(flipPoint.y1);
+      
+      var flipCp1 = JSON.parse(JSON.stringify(stroke.cp1));
+      flipCp1.y = MirrorY(flipCp1.y);
+      strokeObject.cp1 = flipCp1;
+
+      if(flipPoint.type === 'C')
+      {
+        flipPoint.y2 = MirrorY(flipPoint.y2);
+
+        var flipCp2 = JSON.parse(JSON.stringify(stroke.cp2));
+        flipCp2.y = MirrorY(flipCp2.y);
+        strokeObject.cp2 = flipCp2;
+      }
+    }
+    flipPoint.y = MirrorY(flipPoint.y);
+    strokeObject.contours.push(flipPoint);
+  }
+}
+
 //Transfer elements to the alphabet panel and disable inappropriate callbacks
 export function alphabetize(gElement)
 {
@@ -144,39 +174,6 @@ export function parseTransform (a)
           strokeData[i] = glyphToStrokes(glyphData[i]);
         }
         return strokeData;
-      }
-
-      
-
-      //Takes an opentype path commmand and converts to a d3-renderable stroke object
-      //This function was factored for use in editing glyphs interactively
-      function copyStroke(stroke, glyphPath, strokeObject, index)
-      {
-        strokeObject.contours = [];
-        //Exactly 5 path symbols per stroke: MLXLX, where X is L | Q | C
-        for(var j = 0; j < 5; j++)
-        {
-          var flipPoint = JSON.parse(JSON.stringify(glyphPath.commands[(index*5)+j]));
-          if(flipPoint.type === 'Q' || flipPoint.type === 'C')
-          {
-            flipPoint.y1 = MirrorY(flipPoint.y1);
-            
-            var flipCp1 = JSON.parse(JSON.stringify(stroke.cp1));
-            flipCp1.y = MirrorY(flipCp1.y);
-            strokeObject.cp1 = flipCp1;
-
-            if(flipPoint.type === 'C')
-            {
-              flipPoint.y2 = MirrorY(flipPoint.y2);
-
-              var flipCp2 = JSON.parse(JSON.stringify(stroke.cp2));
-              flipCp2.y = MirrorY(flipCp2.y);
-              strokeObject.cp2 = flipCp2;
-            }
-          }
-          flipPoint.y = MirrorY(flipPoint.y);
-          strokeObject.contours.push(flipPoint);
-        }
       }
 
       //Helper for anonymously calling methods with a list of arguments

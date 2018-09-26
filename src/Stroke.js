@@ -16,8 +16,12 @@ export default class Stroke extends Component
 
 	componentDidMount() //React callbacks delimit d3 logic in most cases
 	{
-		var _this = this;
 		this.setState(prevState => ({dashArray: this.path.current.getTotalLength(), dashOffset: this.path.current.getTotalLength()}));
+	}
+
+	componentDidUpdate()
+	{
+		var _this = this;
 		d3.select(this.path.current)
 			.transition()
 				.duration(this.props.drawSpeed)
@@ -31,7 +35,6 @@ export default class Stroke extends Component
 		          .style("stroke-dashoffset", function(d) 
 		          { return 0+"px"; })
 		          .on("end", function() { d3.select(this).attr("class", "drawn"); });
-
 	}
 
 	render()

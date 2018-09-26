@@ -5,12 +5,12 @@ import * as d3 from 'd3';
 
 import Generator from './generator'
 import Panel from './Panel'
-//import DrawParameters from './DrawParameters'
+import DrawParameters from './DrawParameters'
 
 var GLYPH_SCALE = 1024;
 
 var PANEL_WIDTH = 400;
-var PANEL_HEIGHT = 100;
+var PANEL_HEIGHT = 150;
 var BOX_SCALE = 50;
 var colors = ["green", "red", "cyan", "magenta", "yellow"];
 var INSPECT_SCALE = 4;      
@@ -74,9 +74,14 @@ class App extends Component {
             speed = {DRAW_SPEED}
             glyphs = {new Generator()}  //Will need to use DrawParams input callbacks to populate parameters here 
           />
+          <DrawParameters 
+            x={600} y ={0}
+            width={PANEL_WIDTH/2} height={PANEL_HEIGHT}
+            color={colors[0]}
+          />
           <Panel 
             name = "draw"
-            x = {0} y = {500} 
+            x = {0} y = {300} 
             width = {PANEL_WIDTH} 
             height = {PANEL_HEIGHT} 
             glyphScale = {GLYPH_SCALE} 
