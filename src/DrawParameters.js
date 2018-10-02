@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import * as d3 from 'd3';
 
 import Generator from './generator';
-import Slider from './Slider'
+import Slider from './Slider';
+import Toggle from './Toggle';
+import {GLYPH_SCALE} from './Orthographer'
 
 //This class will need to be refactored as a series of input components defining
 //the sliders for interacting with generator parameters. See 'addSlider' and 'addToggle' methods
@@ -18,35 +20,79 @@ export default class DrawParameters extends React.Component
         super(props);
         this.state =    //State holds the variables modified by sliders
         {
-            minStrokes: 1,
-            maxStroke: 5,
             line: true,
             quadratic: true,
             cubic: true,
-            strokeLength: 50,
-            lengthVariance: 0,
-            strokeWidth: 50,
-            widthVariance: 0,
-            connectProbability: 0,
-            trainingDataSize: 100
         }
         //this.generator = new Generator(); 
+        this.length = this.generatorCallback.bind(this, "strokeLength");    //Consider adding text and values to slider to illustrate these
+        this.lengthVar = this.generatorCallback.bind(this, "lengthVariance");
+        this.width = this.generatorCallback.bind(this, "strokeWidth");
+        this.widthVar = this.generatorCallback.bind(this, "widthVariance");
+        this.minStrokes = this.generatorCallback.bind(this, "minStrokes");
+        this.maxStrokes = this.generatorCallback.bind(this, "maxStrokes");
+        this.connect = this.generatorCallback.bind(this, "connectProbability");
+        this.trainingData = this.generatorCallback.bind(this, "trainingDataSize");
 
+        this.line = this.generatorCallback.bind(this, "line");
+        this.quadratic = this.generatorCallback.bind(this, "quadratic");
+        this.cubic = this.generatorCallback.bind(this, "cubic");
     }
 
     render()
     {
         return(
             <g>
-                <rect x={this.props.x} y={this.props.y} width={this.props.width} height={this.props.height}
+                <rect x={this.props.x-10} y={this.props.y} width={this.props.width+50} height={this.props.height+this.props.height*1/8}
                     style={{fill: this.props.color, fillOpacity: 0.25}}/>
-                <Slider x={this.props.x} y={this.props.y} width={this.props.width}/>
+
+                <Toggle x={this.props.x} y={this.props.y - (this.props.height*1/8)} width={this.props.width/4}
+                    valueFunction={this.line} name="line" toggle={this.state.line}/> 
+                <Toggle x={this.props.x + this.props.width/2} y={this.props.y - (this.props.height*1/8)} width={this.props.width/4}
+                    valueFunction={this.quadratic} name="quadratic" toggle={this.state.quadratic}/>
+                <Toggle x={this.props.x + this.props.width} y={this.props.y - (this.props.height*1/8)} width={this.props.width/4}
+                    valueFunction={this.cubic} name="cubic" toggle={this.state.cubic}/>
+
+
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*1/8)} width={this.props.width} 
+                    min={0} max={GLYPH_SCALE/2} valueFunction={this.length} name="Stroke Length"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*2/8)} width={this.props.width} 
+                    min={0} max={GLYPH_SCALE/2} valueFunction={this.lengthVar} name="Length Variance"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*3/8)} width={this.props.width} 
+                    min={0} max={GLYPH_SCALE/2} valueFunction={this.width} name="Stroke Width"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*4/8)} width={this.props.width} 
+                    min={0} max={GLYPH_SCALE/2} valueFunction={this.widthVar} name="Width Variance"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*5/8)} width={this.props.width} 
+                    min={1} max={5} valueFunction={this.minStrokes} name="Minimum Strokes"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*6/8)} width={this.props.width} 
+                    min={1} max={5} valueFunction={this.maxStrokes} name="Maximum Strokes"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*7/8)} width={this.props.width} 
+                    min={0} max={1} valueFunction={this.connect} name="Connect Probability"/>
+                
+                <Slider x={this.props.x} y={this.props.y + (this.props.height*8/8)} width={this.props.width} 
+                    min={1} max={100} valueFunction={this.trainingData} name="Training Data Size"/>
             </g>
             );
     }
 
-    //Callback for sliders to modify a specified value (rather than new methods for every field)
-	
+    generatorCallback = function(name, value)
+    {
+        if(name === "line" || name === "quadratic" || name === "cubic")
+        {
+            this.setState(prevState => ({[name]: value}));
+            if(!this.state.line && !this.state.quadratic && !this.state.cubic)
+            {
+                this.setState(prevState => ({[name]: !value}));
+            }   
+        }
+        this.props.valueChange(name, this.state[name]);
+    }
 }
 
 /*createButton(panel)
@@ -194,64 +240,4 @@ DrawParameters.prototype.togglePanel = function()
           };
         }).on("end", function() { _this.parameterClick = false; });
 }
-
-DrawParameters.prototype.addSlider = function(name, y, min, max)
-{
-    var scaleParam = d3.scaleLinear().domain([0, 3*this.panelWidth/4]).range([min, max]);
-    this.parameterPanel.append("line")
-        .attr("x1", 0)
-        .attr("y1", y)
-        .attr("x2", 3*this.panelWidth/4)
-        .attr("y2", y)
-        .style("stroke-opacity", 1)
-        .style("stroke-width", 0.5);
-    var _this = this;
-    this.parameterPanel.append("circle")
-        .attr("cx", 0)
-        .attr("cy", y)
-        .attr("r", 3)
-        .style("fill", this.boxColor)
-        .style("stroke", 'black')
-        .style("stroke-width", 1)
-        .call(d3.drag().on("drag", function(d, i) { paramEdit(this, d3.event, name, _this, scaleParam); }))
-        .on("click", function() { editFunction(); });
-
-    this.parameterPanel.append("text")
-        .attr("class", "noselect")
-        .attr("x", 0).attr("y", y+10).text(name).style("font-size", 12+"px");
-}
-
-DrawParameters.prototype.addToggle = function(name, y)
-{
-    var _this = this;
-    this.parameterPanel.append("rect")
-        .attr("x", 3*this.panelWidth/4)
-        .attr("y", y)
-        .attr("width", this.panelWidth/4)
-        .attr("height", this.panelWidth/4)
-        .style("fill", this.boxColor)
-        .style("stroke", 'black')
-        .style("stroke-width", 1)
-        .on("click", function() 
-            { 
-                _this.generator[name] = !_this.generator[name]; 
-                if(!_this.generator.line && !_this.generator.cubic && !_this.generator.quadratic)
-                    _this.generator[name] = !_this.generator[name];
-                if(_this.generator[name]) 
-                    d3.select(this).style("fill", _this.boxColor);
-                else
-                    d3.select(this).style("fill", "white"); 
-            });
-    this.parameterPanel.append("text")
-        .attr("class", "noselect")
-        .attr("x", this.panelWidth+5).attr("y", y+(y/2)).text(name).style("font-size", 10+"px");
-}
-
-function paramEdit(element, event, param, panel, scaleP)
-{
-    if(event.x > 0 && event.x < 3*panel.panelWidth/4)
-    {
-        d3.select(element).attr("cx", event.x);
-        panel.generator[param] = scaleP(event.x);
-    }
-}*/
+*/

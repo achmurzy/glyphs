@@ -3,19 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import * as d3 from 'd3';
 
-import Generator from './generator'
-import Panel from './Panel'
-import DrawParameters from './DrawParameters'
-
-var GLYPH_SCALE = 1024;
-
-var PANEL_WIDTH = 400;
-var PANEL_HEIGHT = 150;
-var BOX_SCALE = 50;
-var colors = ["green", "red", "cyan", "magenta", "yellow"];
-var INSPECT_SCALE = 4;      
-var GENERATION_RATE = 20;
-var DRAW_SPEED = 500;
+import Orthographer from './Orthographer'
 
 var margin = {top: 40, right: 40, bottom: 40, left: 40},
                       mWidth = 1200, 
@@ -61,37 +49,8 @@ class App extends Component {
               y={margin.top}
               width={mWidth}
               height={mHeight}>
-          <Panel 
-            name = "draw"
-            x = {0} y = {0} 
-            width = {PANEL_WIDTH} 
-            height = {PANEL_HEIGHT} 
-            glyphScale = {GLYPH_SCALE} 
-            boxScale = {BOX_SCALE} 
-            inspectScale = {INSPECT_SCALE}
-            color = {colors[0]} 
-            rate = {GENERATION_RATE} 
-            speed = {DRAW_SPEED}
-            glyphs = {new Generator()}  //Will need to use DrawParams input callbacks to populate parameters here 
-          />
-          <DrawParameters 
-            x={600} y ={0}
-            width={PANEL_WIDTH/2} height={PANEL_HEIGHT}
-            color={colors[0]}
-          />
-          <Panel 
-            name = "draw"
-            x = {0} y = {300} 
-            width = {PANEL_WIDTH} 
-            height = {PANEL_HEIGHT} 
-            glyphScale = {GLYPH_SCALE} 
-            boxScale = {BOX_SCALE} 
-            inspectScale = {INSPECT_SCALE}
-            color = {colors[2]} 
-            rate = {GENERATION_RATE} 
-            speed = {DRAW_SPEED}
-            glyphs = {new Generator()}  //Will need to use DrawParams input callbacks to populate parameters here 
-          />
+          
+        <Orthographer x={margin.left} y={margin.top}/>
         </svg>    
       </div>);
   }

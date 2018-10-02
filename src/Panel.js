@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import * as d3 from 'd3';
 
 import Glyph from './Glyph'
-import {glyphToStrokes, alphabetize } from './orthographer'
 
 export default class Panel extends Component
 {
@@ -12,15 +11,6 @@ export default class Panel extends Component
 	{
 		super(props)
 
-    this.glyphsX = function() { return this.props.width / this.props.boxScale; };
-    this.glyphsY = function() { return this.props.height / this.props.boxScale; };
-    
-    this.glyphCount = this.glyphsX()*this.glyphsY();
-    const MAX_GLYPHS = this.glyphCount;
-
-    if(this.props.inspectScale > this.glyphsX())
-        this.props.inspectScale = this.glyphsX();
-
     this.xScale = d3.scaleLinear()
                     .domain([0, this.props.glyphScale])
                     .range([0, this.props.boxScale]);
@@ -29,78 +19,17 @@ export default class Panel extends Component
                 .range([0, this.props.boxScale]);  
 
     this.gScaleX = d3.scaleLinear()
-        .domain([0, this.glyphsX()])
+        .domain([0, this.props.glyphsX])
         .range([0, this.props.width]);
 
     this.gScaleY = d3.scaleLinear()
-        .domain([0, this.glyphsY()])
+        .domain([0, this.props.glyphsY])
         .range([0, this.props.height]);
 
-    this.panelWidth = 2*this.props.boxScale;
-
-    this.glyphCounter = 0;
-    this.generator = this.props.glyphs;
-		this.state = //State is reserved for elements which trigger re-rendering of components
+    this.state = //State is reserved for elements which trigger re-rendering of components
 		{
-			glyphData: [],
-			windowData: [],	
-			glyphWindow: 0,
-			
-			/*fullButton: this.group.append("rect")
-				.attr("x", 0)
-				.attr("y", this.drawParams.boxScale)
-				.attr("width", this.drawParams.boxScale)
-				.attr("height", 0)
-				.style("fill", 'gray')
-				.style("fill-opacity", 0.2)
-				.on("click", function() 
-				{
-					if(!this.state.fullClick)
-					{
-						this.state.fullClick = true;
-						this.hideFullButton((this.props.drawParams.glyphsX()*this.props.drawParams.glyphsY()));
-    	
-		                this.state.expandedElement = Number.MAX_SAFE_INTEGER;
-				    	this.state.glyphWindow += this.props.drawParams.glyphCount;
-		                this.windowData = [];
-		                if(this.MAX_GLYPHS === this.state.glyphData.length && this.state.glyphWindow === this.MAX_GLYPHS)
-		                {
-		                  this.state.glyphData = [];
-		                  //_this.toggleGeneration();
-		                  this.state.glyphWindow = 0;
-		                }
-					}
-					
-				}),*/
 			expandedElement: Number.MAX_SAFE_INTEGER,
 		};
-
-    this.lastTime = 0;
-    this.totalTime = 0.1;
-    this.stopTime = 0;
-
-    var _this = this;
-    var timeCall = function(elapsed)  //Callback controlling generation of new glyphs
-    { 
-      _this.totalTime += (d3.now() - _this.lastTime);
-      _this.lastTime = d3.now(); 
-      if(elapsed > _this.props.rate)
-      {
-        if(!_this.glyphsFull())
-        {
-            var glyph = _this.generator.generateGlyph(_this.glyphCounter);
-            _this.addGlyph(glyph);
-        }  
-        
-        if(_this.state.windowData.length < _this.glyphCount)
-        {
-          //_this.state.windowData.push(_this.glyphData[_this.windowData.length+_this.glyphWindow]);
-          //this.update();
-        }  
-      }
-    }
-
-    this.timer = d3.interval(timeCall, this.props.rate);
 
     this.group = React.createRef();
 
@@ -113,58 +42,21 @@ export default class Panel extends Component
     this.positionFunction;
 
     this.fullClick = false;
-    this.glyphsFull = function() 
-    { return MAX_GLYPHS === this.state.glyphData.length; };
-
-    this.addGlyph = function(glyph)  //Does this re-render every glyph?
-    {
-        this.setState(prevState => ({glyphData: [...prevState.glyphData, glyphToStrokes(glyph)]}));
-        this.glyphCounter++;   
-    };
   }
-
-/*
-    //Responsible for initializing glyph points for editing
-    if(this.INIT_DATA)
-      initGlyphData(enterGlyphs, _this.drawParams.xScale, _this.drawParams.yScale, _this);
-
-    if(this.windowData.length === this.drawParams.glyphCount)
-    {
-      this.showFullButton(this.drawParams.glyphCount-1);
-    }
-};*/
 
   componentDidUpdate(prevProps, prevState)
-  {
-    /*if(prevState.expandedElement !== this.state.expandedElement)
-    {
-      var _this = this;
-      var gGroup = d3.select(this.group.current);
-      gGroup.selectAll().each(function(d, i) //No data bound to our group, can't select anything
-      {
-        console.log(i);
-        var groupElement = d3.select(this);
-        var startTransform = parseTransform(groupElement.attr("transform"));
-        var endTransform = _this.positionFunction(i, _this); 
-        console.log(startTransform);
-        console.log(endTransform);
-        if(i===_this.lastExpanded)
-        { _this.toggleGlyphData(groupElement, false); }
-        
-      });
-      console.log("failed");
-    }*/
-  }
+  {}
 
   render()  //Render the panel as a list of glyphs
   {
-    const glyphs = this.state.glyphData;
+    const glyphs = this.props.glyphData;
     return (<g ref={this.group} transform={"translate("+this.props.x+","+this.props.y+")"}>
-                {glyphs.map((glyph, i) => //Cannot use index as key in the long term - Will also need to pass strokes in as Props
+                {glyphs.map((glyph, i) => 
                   {
                       return (<Glyph key={glyph.index} index={glyph.index} name={this.props.name} transform={this.positionGlyph(i, this.state.expandedElement)} 
                       boxScale={this.props.boxScale} color={this.props.color} xScale={this.xScale} yScale={this.yScale} strokes={glyph.strokes} drawSpeed={this.props.speed} 
-                      inspecting={i===this.state.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.glyphs} clickFunction={this.clickFunction}/>);
+                      inspecting={i===this.state.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.generator} clickFunction={this.clickFunction}
+                      strokeModifier={this.props.strokeModifier}/>);
                   }
                 )}
             </g>);
@@ -182,12 +74,12 @@ export default class Panel extends Component
       }
       else
       {
-        var columnNumber = (element) % this.glyphsX();
-        var emptyColumns = this.props.inspectScale - (this.glyphsX() - columnNumber);
+        var columnNumber = (element) % this.props.glyphsX;
+        var emptyColumns = this.props.inspectScale - (this.props.glyphsX - columnNumber);
         if(emptyColumns < 0)
           emptyColumns = 0;
         var boundaryIndex = Math.floor((index - element - 1) / 
-          (this.glyphsX() - (this.props.inspectScale - emptyColumns)))+1;
+          (this.props.glyphsX - (this.props.inspectScale - emptyColumns)))+1;
         if(boundaryIndex > this.props.inspectScale)
           boundaryIndex = this.props.inspectScale;
 
@@ -195,8 +87,8 @@ export default class Panel extends Component
       }   
     }
 
-    var gY = Math.floor((index+offset) / this.glyphsX());
-    var gX = (offset+index) - (gY * this.glyphsX());
+    var gY = Math.floor((index+offset) / this.props.glyphsX);
+    var gX = (offset+index) - (gY * this.props.glyphsX);
 
     return "translate(" + this.gScaleX(gX) + "," + this.gScaleY(gY) + ") scale("+inspectScale+","+inspectScale+")";
   }
@@ -214,8 +106,8 @@ export default class Panel extends Component
         if(dt > _this.clickLength || !_this.clicked)
         {
           if(!_this.clicked)
-            t.stop()
-;          else
+            t.stop();          
+          else
           {
             t.stop();
             _this.clicked = false;
@@ -239,7 +131,7 @@ export default class Panel extends Component
     //  { if(d3.select(this).attr("class") === "undrawn") drawing = true; });
     if(!drawing)  //Find the index of the selected element within the DOM hierarchy
     {
-      var positionIndex = this.state.glyphData.findIndex((glyph) => {return glyph.index === selectedIndex});
+      var positionIndex = this.props.glyphData.findIndex((glyph) => {return glyph.index === selectedIndex});
       this.inspectGlyph(positionIndex);
     }
   }
@@ -274,7 +166,7 @@ export default class Panel extends Component
             { positionIndex = i; }
           });
 
-          alphabetize(gElement);
+          //alphabetize(gElement); sposed to happen
           _this.toggleGlyphData(gSelect, false);
           _this.removeGlyph(_this, positionIndex);
           //if(_this.totalTime === _this.stopTime)
@@ -321,67 +213,27 @@ export default class Panel extends Component
 
   }
 
-  //Adds false glyphs to make room for expanded element
-  /*expand = function(i)
-  {  
-    if(i >= this.state.expandedElement) //Only position glyphs past the expanded element
-    {       
-      if(i === this.state.expandedElement)
-      { 
-        var transform = parseTransform(this.positionGlyph(i, Number.MAX_SAFE_INTEGER));
-        transform.scale = [this.props.inspectScale, this.props.inspectScale];
-        return transform;
-      }
-      else
-      {
-        return parseTransform(this.positionGlyph(i, this.expandedElement));
-      }
-    }
-    else
-    {
-      return parseTransform(this.positionGlyph(i, Number.MAX_SAFE_INTEGER));
-    }   
-  }
-
-  //Collapses transforms to return to default panel formatting
-  collapse = function(i)
-  {
-    return parseTransform(this.positionGlyph(i, Number.MAX_SAFE_INTEGER));
-  }*/
-		
-		/*this.drawParams.createButton(this);
-
-		//Might need to place d3 statements into render()
-		this.group.append("line")
-              .attr("class", "full")
-							.attr("x1", (3*this.drawParams.boxScale/4))
-							.attr("y1", this.drawParams.boxScale + this.drawParams.boxScale/8)
-							.attr("x2", this.drawParams.boxScale/4)
-							.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
-              .style("stroke-width", 0.5);
-						this.group.append("line")
-              .attr("class", "full")
-							.attr("x1", this.drawParams.boxScale - this.drawParams.boxScale/3)
-							.attr("y1", this.drawParams.boxScale)
-							.attr("x2", this.drawParams.boxScale - this.drawParams.boxScale/4)
-							.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
-              .style("stroke-width", 0.5);
-						this.group.append("line")
-							.attr("class", "full")
-              .attr("x1", this .drawParams.boxScale - this.drawParams.boxScale/3)
-							.attr("y1", this.drawParams.boxScale + this.drawParams.boxScale/4)
-							.attr("x2", this.drawParams.boxScale - this.drawParams.boxScale/4)
-							.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
-              .style("stroke-width", 0.5);
-  
-  toggleGeneration = function ()
-	  {
-	  	if(this.totalTime > this.stopTime)
-	  		this.timer.stop();
-	  	else
-	  		this.timer = d3.interval(timeCall, this.drawParams.generationTime);
-	  	this.stopTime = this.totalTime;
-	  };
+	/*this.group.append("line")
+            .attr("class", "full")
+						.attr("x1", (3*this.drawParams.boxScale/4))
+						.attr("y1", this.drawParams.boxScale + this.drawParams.boxScale/8)
+						.attr("x2", this.drawParams.boxScale/4)
+						.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
+            .style("stroke-width", 0.5);
+					this.group.append("line")
+            .attr("class", "full")
+						.attr("x1", this.drawParams.boxScale - this.drawParams.boxScale/3)
+						.attr("y1", this.drawParams.boxScale)
+						.attr("x2", this.drawParams.boxScale - this.drawParams.boxScale/4)
+						.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
+            .style("stroke-width", 0.5);
+					this.group.append("line")
+						.attr("class", "full")
+            .attr("x1", this .drawParams.boxScale - this.drawParams.boxScale/3)
+						.attr("y1", this.drawParams.boxScale + this.drawParams.boxScale/4)
+						.attr("x2", this.drawParams.boxScale - this.drawParams.boxScale/4)
+						.attr("y2", this.drawParams.boxScale + this.drawParams.boxScale/8)
+            .style("stroke-width", 0.5);
 
 	showFullButton = function(index) 
 	{ 
@@ -431,40 +283,6 @@ export default class Panel extends Component
 		}
 	};
 
-	generateTrainingData = function(size)
-    {
-    	var train = []
-    	for(var i = 0; i < size; i++)
-    	{
-    		var newGlyph = this.generator.trainGlyph(train);
-    		train.push.apply(train, newGlyph);
-    	}
-    	var dataString = JSON.stringify(train);
-    	download(dataString, "train.txt");
-    };
 }
-
-Panel.prototype.showFont = function(font)
-  {
-    this.toggleGeneration();
-    this.glyphData = [];
-    this.INIT_DATA = false;
-    for(var i = 0; i < font.glyphs.length; i++)
-    {
-      if(this.glyphData.length > this.MAX_GLYPHS*2)
-        break;
-      var glyph = fontGlyphToStrokes(font.glyphs.glyphs[i], this.drawParams.boxColor);
-
-      if(glyph.strokes.length > 0)
-      {
-        this.glyphData.push(glyph);
-        this.windowData.push(glyph);
-      }  
-      var height = this.windowData.length / this.drawParams.glyphsX() * this.drawParams.boxScale
-      d3.select("body").select("svg").attr("height", 800+height);
-    }
-    
-    this.update();
-    //this.showFullButton(this.drawParams.glyphCount-1);
-  };*/
+*/
 }

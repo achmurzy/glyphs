@@ -73,7 +73,6 @@ export function glyphToStrokes(glyphData)
     copyStroke(stroke, glyphData.path, strokeObject, i);
     glyphObject.strokes.push(strokeObject);
   }
-
   return glyphObject;
 }
 
@@ -82,7 +81,7 @@ export function glyphToStrokes(glyphData)
 export function copyStroke(stroke, glyphPath, strokeObject, index)
 {
   strokeObject.contours = [];
-  //Exactly 5 path symbols per stroke: MLXLX, where X is L | Q | C
+   //Exactly 5 path symbols per stroke: MLXLX, where X is L | Q | C
   for(var j = 0; j < 5; j++)
   {
     var flipPoint = JSON.parse(JSON.stringify(glyphPath.commands[(index*5)+j]));
