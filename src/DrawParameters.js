@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 import Generator from './generator';
 import Slider from './Slider';
 import Toggle from './Toggle';
+import Button from './Button';
 import {GLYPH_SCALE} from './Orthographer'
 
 //This class will need to be refactored as a series of input components defining
@@ -55,16 +56,16 @@ export default class DrawParameters extends React.Component
 
 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*1/8)} width={this.props.width} 
-                    min={0} max={GLYPH_SCALE/2} valueFunction={this.length} name="Stroke Length"/>
+                    min={1} max={GLYPH_SCALE/2} valueFunction={this.length} name="Stroke Length"/>
                 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*2/8)} width={this.props.width} 
-                    min={0} max={GLYPH_SCALE/2} valueFunction={this.lengthVar} name="Length Variance"/>
+                    min={1} max={GLYPH_SCALE/2} valueFunction={this.lengthVar} name="Length Variance"/>
                 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*3/8)} width={this.props.width} 
-                    min={0} max={GLYPH_SCALE/2} valueFunction={this.width} name="Stroke Width"/>
+                    min={1} max={GLYPH_SCALE/8} valueFunction={this.width} name="Stroke Width"/>
                 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*4/8)} width={this.props.width} 
-                    min={0} max={GLYPH_SCALE/2} valueFunction={this.widthVar} name="Width Variance"/>
+                    min={1} max={GLYPH_SCALE/8} valueFunction={this.widthVar} name="Width Variance"/>
                 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*5/8)} width={this.props.width} 
                     min={1} max={5} valueFunction={this.minStrokes} name="Minimum Strokes"/>
@@ -77,6 +78,10 @@ export default class DrawParameters extends React.Component
                 
                 <Slider x={this.props.x} y={this.props.y + (this.props.height*8/8)} width={this.props.width} 
                     min={1} max={100} valueFunction={this.trainingData} name="Training Data Size"/>
+
+                <text x={this.props.x+2} y={this.props.y+this.props.height+40} style={{font: "12px sans-serif"}}>Download training data</text>
+                <Button x={this.props.x} y={this.props.y+this.props.height+50} boxScale={this.props.width}
+                    clickFunction={this.props.generateTrainingData}/>
             </g>
             );
     }
@@ -91,7 +96,7 @@ export default class DrawParameters extends React.Component
                 this.setState(prevState => ({[name]: !value}));
             }   
         }
-        this.props.valueChange(name, this.state[name]);
+        this.props.valueChange(name, value);
     }
 }
 

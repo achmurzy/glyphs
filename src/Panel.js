@@ -26,9 +26,9 @@ export default class Panel extends Component
         .domain([0, this.props.glyphsY])
         .range([0, this.props.height]);
 
-    this.state = //State is reserved for elements which trigger re-rendering of components
-		{
-			expandedElement: Number.MAX_SAFE_INTEGER,
+    this.state = //Even though it feels intuitive, having expandedElement on Panel instead of Orthographer
+		{             //is causing problems with updating. Lift state upward and forget about your abstractions ("property of my Panels", etc.)
+			//expandedElement: Number.MAX_SAFE_INTEGER,
 		};
 
     this.group = React.createRef();
@@ -53,9 +53,9 @@ export default class Panel extends Component
     return (<g ref={this.group} transform={"translate("+this.props.x+","+this.props.y+")"}>
                 {glyphs.map((glyph, i) => 
                   {
-                      return (<Glyph key={glyph.index} index={glyph.index} name={this.props.name} transform={this.positionGlyph(i, this.state.expandedElement)} 
+                      return (<Glyph key={glyph.index} index={glyph.index} name={this.props.name} transform={this.positionGlyph(i, this.props.expandedElement)} 
                       boxScale={this.props.boxScale} color={this.props.color} xScale={this.xScale} yScale={this.yScale} strokes={glyph.strokes} drawSpeed={this.props.speed} 
-                      inspecting={i===this.state.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.generator} clickFunction={this.clickFunction}
+                      inspecting={i===this.props.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.generator} clickFunction={this.clickFunction}
                       strokeModifier={this.props.strokeModifier}/>);
                   }
                 )}
@@ -136,81 +136,32 @@ export default class Panel extends Component
     }
   }
 
-  //Toggle interactive elements and expand glyph for inspection
-  //Shift transform on all other glyphs 
-  inspectGlyph = function(selectedIndex)
-  {
-    this.lastExpanded = this.state.expandedElement;
-    if(selectedIndex === this.state.expandedElement) 
-    {
-      this.setState({expandedElement: Number.MAX_SAFE_INTEGER});
-    }
-    else 
-    {
-      this.setState({expandedElement: selectedIndex});
-    }
-  }
-
-  doubleClickSemantics = function(_this, gElement)
+  doubleClickSemantics = function(selectedIndex)
   {
     var drawing = false;
-    var gSelect = d3.select(gElement);
     var positionIndex;
-    gSelect.selectAll("path").each(function(d, i) //Blocks inspection of undrawn glyphs
-      { if(d3.select(this).attr("class") === "undrawn") drawing = true; });
+    //gSelect.selectAll("path").each(function(d, i) //Blocks inspection of undrawn glyphs
+    //  { if(d3.select(this).attr("class") === "undrawn") drawing = true; });
     if(!drawing)
     {
-          _this.group.selectAll("g."+_this.name).each(function(d, i) //Double-click
-          {                 
-            if(d.index === gSelect.datum().index)                    
-            { positionIndex = i; }
-          });
-
-          //alphabetize(gElement); sposed to happen
-          _this.toggleGlyphData(gSelect, false);
-          _this.removeGlyph(_this, positionIndex);
-          //if(_this.totalTime === _this.stopTime)
-          //  _this.toggleGeneration();
+        var positionIndex = this.props.glyphData.findIndex((glyph) => {return glyph.index === selectedIndex});
+        this.props.removeGlyph(positionIndex);
       }
   }
 
-  removeGlyph = function(_this, index)
+    //Toggle interactive elements and expand glyph for inspection
+  //Shift transform on all other glyphs 
+  inspectGlyph = function(selectedIndex)
   {
-    _this.glyphData.splice(_this.glyphWindow+index, 1);
-    _this.windowData.splice(index, 1);
-    if(index === _this.expandedElement)
+    this.lastExpanded = this.props.expandedElement;
+    if(selectedIndex === this.props.expandedElement) 
     {
-      _this.expandedElement = Number.MAX_SAFE_INTEGER;
-      _this.transformGlyphs(_this.collapse);
-      return;
+      this.props.expandElement(Number.MAX_SAFE_INTEGER);
     }
-    else if(index < _this.expandedElement)
+    else 
     {
-      _this.expandedElement--;
+      this.props.expandElement(selectedIndex);
     }
-    _this.transformGlyphs(_this.expand);
-  }
-
-  toggleGlyphData = function(glyph, up)
-  {
-    var _this = this;
-    var radius = up ? 1 : 0;
-    
-    //Draw stroke elements for interactive editing
-    var startPoints = glyph.selectAll("circle.start").attr("r", radius);
-    var endPoints = glyph.selectAll("circle.end").attr("r", radius);
-    var controlPoints1 = glyph.selectAll("circle.cp1").attr("r", radius);
-    var controlPoints2 = glyph.selectAll("circle.cp2").attr("r", radius);
-
-    var bbox = glyph.selectAll("circle.bbox").attr("r", radius);
-    var aWidth = glyph.select("circle.awidth").attr("r", radius);
-    var boundingLines = glyph.selectAll("line.bounds")
-      .style("stroke-width", 0.1 * radius);
-
-    glyph.selectAll("path").transition()
-      .style("fill", function(d) { if(up) return d.color; else return _this.drawParams.boxColor; })
-      .style("stroke",function(d) { if(up) return d.color; else return 'gray'; });
-
   }
 
 	/*this.group.append("line")

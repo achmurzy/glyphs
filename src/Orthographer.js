@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 
 import Panel from './Panel'
 import DrawParameters from './DrawParameters'
+import Button from './Button'
 import Generator from './generator'
 import {glyphToStrokes, alphabetize } from './glyph-helper'
 import {loadFont, download, fontGlyphToStrokes} from './font-helper'
@@ -15,7 +16,7 @@ var PANEL_HEIGHT = 150;
 var BOX_SCALE = 50;
 var colors = ["green", "red", "cyan", "magenta", "yellow"];
 var INSPECT_SCALE = 4;      
-var GENERATION_RATE = 250;
+var GENERATION_RATE = 50;
 var DRAW_SPEED = 500;
 
 export default class Orthographer extends React.Component
@@ -31,6 +32,10 @@ export default class Orthographer extends React.Component
 
 		this.generator = new Generator();
 		this.changeGeneratorValue = this.changeGeneratorValue.bind(this);
+		this.changeExpandedElement = this.changeExpandedElement.bind(this);
+		this.generateTrainingData = this.generateTrainingData.bind(this);
+		this.alphabetize = this.alphabetize.bind(this);
+		this.fullButtonClick = this.fullButtonClick.bind(this);
 
 		this.glyphsX = PANEL_WIDTH / BOX_SCALE;
     	this.glyphsY = PANEL_HEIGHT / BOX_SCALE;
@@ -50,9 +55,10 @@ export default class Orthographer extends React.Component
 
 	    this.glyphsFull = function() 
     	{ return MAX_GLYPHS === this.state.glyphData.length; };
+    	this.fullButton = React.createRef();
 
 	    var _this = this;
-	    var timeCall = function(elapsed)  //Callback controlling generation of new glyphs
+	    this.timeCall = function(elapsed)  //Callback controlling generation of new glyphs
 	    { 
 	      _this.totalTime += (d3.now() - _this.lastTime);
 	      _this.lastTime = d3.now(); 
@@ -62,7 +68,9 @@ export default class Orthographer extends React.Component
 	        {
 	            var glyph = _this.generator.generateGlyph(_this.glyphCounter);
 	            _this.addGlyph(glyph);
-	        }  
+	        } 
+	        else
+	        	_this.timer.stop(); 
 	        
 	        /*if(_this.state.windowData.length < _this.glyphCount)
 	        {
@@ -72,16 +80,27 @@ export default class Orthographer extends React.Component
 	      }
 	    }
 
-	    this.timer = d3.interval(timeCall, GENERATION_RATE);
+	    this.timer = d3.interval(this.timeCall, GENERATION_RATE);
 
 	    this.changeStrokeData = this.changeStrokeData.bind(this);
+	}
+
+	componentDidUpdate()
+	{
+		if(this.glyphsFull())
+		{							//Button.current.Button.current - get internal ref (don't do this often)
+			var groupFull = d3.select(this.fullButton.current.button.current);
+			groupFull.select("rect")	//This function will need to be expanded to accomodate inspection of fonts and RNN generated glyphs
+						.transition().duration(100)
+						.attr("height", BOX_SCALE/4);
+		}
 	}
 
 	render()
 	{	
 		return(<g>
 					<Panel 
-		            name = "draw"
+		            name = {this.props.name}
 		            x = {this.props.x} y = {this.props.y} 
 		            glyphsX={this.glyphsX} glyphsY={this.glyphsY}
 		            width = {PANEL_WIDTH} 
@@ -91,22 +110,36 @@ export default class Orthographer extends React.Component
 		            inspectScale = {INSPECT_SCALE}
 		            color = {colors[0]} 
 		            speed = {DRAW_SPEED}
-		            glyphData = {this.state.glyphData} 
+		            glyphData = {this.state.glyphData}
+		            expandedElement = {this.state.expandedElement}
+		            expandElement = {this.changeExpandedElement} 
 		            generator = {this.generator}
 		            strokeModifier = {this.changeStrokeData}
+		            removeGlyph = {this.alphabetize}
 		          />
 		          <DrawParameters 
 		            x={this.props.x + PANEL_WIDTH+(PANEL_WIDTH/2)} y ={this.props.y}
 		            width={PANEL_WIDTH/2} height={PANEL_HEIGHT}
 		            color={colors[0]}
 		            valueChange={this.changeGeneratorValue}
+		            generateTrainingData={this.generateTrainingData}
 		          />
+		          {this.glyphsFull() && 
+		          	<Button ref={this.fullButton} x={this.props.x+PANEL_WIDTH} y={this.props.y+PANEL_HEIGHT} boxScale={BOX_SCALE} 
+		          			clickFunction={this.fullButtonClick}/>}
 	          </g>);
 	}
 
 	changeGeneratorValue = function(name, value)
 	{
 		this.generator[name] = value;
+		console.log(name);
+		console.log(value);
+	}
+
+	changeExpandedElement = function(element)
+	{
+		this.setState({expandedElement: element});
 	}
 
 	//This was a serious struggle. It may be faster to use immutability-helper to only update specific
@@ -119,9 +152,33 @@ export default class Orthographer extends React.Component
 		this.setState({glyphData: newData});
 	}
 
-	generateTrainingData = function(size)
+	fullButtonClick = function()
+	{
+		this.setState({glyphData: [], expandedElement: Number.MAX_SAFE_INTEGER});
+		this.timer = d3.interval(this.timeCall, GENERATION_RATE);
+	}
+
+	alphabetize = function(index)
+	{
+		var newExpanded = this.state.expandedElement;
+		var newGlyphs = [...this.state.glyphData];
+		newGlyphs.splice(index, 1);
+		if(index === this.state.expandedElement)
+		{
+		  newExpanded = Number.MAX_SAFE_INTEGER;
+		}
+		else if(index < this.state.expandedElement)
+		{
+		  newExpanded = this.state.expandedElement-1;
+		}
+		this.setState({glyphData: newGlyphs, expandedElement: newExpanded});
+		this.timer = d3.interval(this.timeCall, GENERATION_RATE);
+	}
+
+	generateTrainingData = function()
 	{
 		var train = []
+		var size = this.generator.trainingDataSize;
 		for(var i = 0; i < size; i++)
 		{
 		  var newGlyph = this.generator.trainGlyph(train);
