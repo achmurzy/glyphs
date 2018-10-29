@@ -1,8 +1,16 @@
 import {GLYPH_SCALE} from './Orthographer'
 var opentype = require('opentype.js')
 
-function loadFont(fontName, panel)
+//The tables that should have a unique copy per font are those that are used 
+//by the system in identifying the font and its character mapping, including 
+//'cmap', 'name', and OS/2. 
+//Basically, we need a way to extract the 'unique' glyphs for a given font,
+//i.e. the symbols that drew us to it in the first place.
+//Some kind of brute force approach mapping Unicode ranges based on language
+//might be most expedient. Remember your goal: learning font styles
+export function loadFont(fontName, app)
 {
+  console.log(fontName);
   opentype.load(fontName, function(err, font)
   {
     if(err)
@@ -10,51 +18,96 @@ function loadFont(fontName, panel)
       console.log(err);
       return null; 
     }
+    else
     {
-      panel.showFont(font);  
+      app.setOpentypeResult(font);  
     }
   });
 }
 
+export function fontGlyphsToStrokes(font, index, count, color)
+{
+  var glyphs = [];
+  for(var i = index; i<index+count; i++)
+  {
+    if(i>=font.glyphs.length) {break;}
+    glyphs[i] = fontGlyphToStrokes(font, i, color);
+  }
+  return(glyphs);
+}
+
 //Mimics function in orthographer.js for making
 //glyphs visualizable
-export function fontGlyphToStrokes(glyph, color)
+export function fontGlyphToStrokes(font, index, color)
 {
+  var glyph = font.glyphs.glyphs[index];
+  var path = glyph.path;
+  var ind = 0;
+  var stroke = new Object();
+  stroke.contours = [];
+  stroke.color = color;
+  var strokeObject = [];
+  
+  if(path.commands.length > 0)
+  {
+    var strokeType = path.commands[ind].type;
+    while(strokeType != 'Z')
+    {
+      var ss = path.commands[ind];
+      ss = scaleFontStroke(font, ss)
+      stroke.contours.push(ss);
+      ind++;
+      if(ind < path.commands.length)
+      {
+        strokeType = path.commands[ind].type;
+        if(strokeType === 'M')
+        {
+          //Need to add start, end, cp etc. to 'stroke' for editing.
+          //Need to flip and scale into our local glyph space as well
+          console.log(stroke.contours);
+          strokeObject.push(stroke);
+          stroke = new Object();
+          stroke.start = path.commands[ind];
+          stroke.color = color;
+          stroke.contours = [];
+        }
+      }
+      else
+        break;  
+    }
+    strokeObject.push(stroke); 
+  }
+  else
+      console.log("Nothing");
+
   var glyphObject = new Object();
-  glyphObject.strokes = fontCopyStrokes(glyph.path, color);
+  glyphObject.strokes = strokeObject;
   glyphObject.index = glyph.index;
   glyphObject.glyph = glyph;
 
   return glyphObject;
 }
 
-//Mimics function in orthographer.js for making strokes
-//on fonts visualizable without being editable - Takes glyph path
-function fontCopyStrokes(path, color)
+function scaleFontStroke(font, command)
 {
-  var ind = 0;
-  var stroke = new Object();
-  stroke.contours = [];
-  stroke.color = color;
-  var strokeObject = [];
-  if(path.commands.length > 0)
-  {
-    while(path.commands[ind].type != 'Z' || ind > path.commands.length)
-    {
-      var ss = path.commands[ind];
-      stroke.contours.push(ss);
-      ind++;
-      if(path.commands[ind].type === 'M')
-      {
-        strokeObject.push(stroke);
-        stroke = new Object();
-        stroke.color = color;
-        stroke.contours = [];
-      }  
-    } 
-  }
+  //Our glyph scale: [0, 1024], [0, 1024]
+  var scaledCommand = {...command};
+  var min = new Object({x: font.tables.head.xMin, y: font.tables.head.yMin});
+  var max = new Object({x: font.tables.head.xMax, y: font.tables.head.yMax})
+  scaledCommand.x = scaleFontPoint(command.x, min.x, max.x);
+  scaledCommand.y = GLYPH_SCALE - scaleFontPoint(command.y, min.x, max.x);
   
-  return strokeObject;
+  if(command.type === 'Q')
+  {
+    scaledCommand.x1 = scaleFontPoint(command.x1, min.x, max.x);
+    scaledCommand.y1 = GLYPH_SCALE - scaleFontPoint(command.y1, min.x, max.x);  
+  }  
+  return(scaledCommand)
+}
+
+function scaleFontPoint(pp, min, max)
+{
+  return(GLYPH_SCALE * (pp - min) / (max - min))
 }
 
 //This function will write the commands in our training data format

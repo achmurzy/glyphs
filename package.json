@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "d3": "5.7.0",
+    "fine-uploader": "^5.16.2",
     "immutability-helper": "^2.8.1",
     "opentype.js": "^0.10.0",
     "react": "^16.5.2",

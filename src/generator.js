@@ -361,10 +361,10 @@ export default class Generator
 	}
 
 	//Parse pseudo-JSON format output from AI modules
-	parseGlyphs(text, panel) 
+	parseGlyphs(text, counter) 
 	{                                  
 	  var count = 0;
-	  var glyphCount = 0;
+	  var glyphCount = counter;
 	  var currentGlyph;
 	  var pathList;
 	  var glyphs = JSON.parse(text);
@@ -445,18 +445,7 @@ export default class Generator
 	      addContour(path, currentGlyph.path);
 	    }
 	  }
-	panel.hideFullButton(panel.drawParams.glyphsX()*panel.drawParams.glyphsY());
-	panel.glyphData = [];
-	panel.expandedElement = Number.MAX_SAFE_INTEGER;
-	  for(var i =0;i<drawGlyphs.length;i++)
-	  {
-	  	if(panel.glyphsFull())
-	  	{
-	  		panel.showFullButton(panel.drawParams.glyphCount);
-	  		break;
-	  	}
-	  	panel.addGlyph(drawGlyphs[i]);
-	  }
+	  return(drawGlyphs);
 	};
 
 	RandomInsideBox()

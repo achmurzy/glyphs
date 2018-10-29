@@ -32,7 +32,6 @@ export default class Toggle extends Component
 
     editFunction = function()
     {
-    	console.log(this.props.toggle);
     	this.props.valueFunction(!this.props.toggle);
     }
 }

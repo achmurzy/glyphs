@@ -1,13 +1,17 @@
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import logo from './logo.svg';
 import './App.css';
 import * as d3 from 'd3';
 
-import Orthographer from './Orthographer'
+import Orthographer, {GLYPH_SCALE, BOX_SCALE} from './Orthographer';
+import Panel from './Panel';
+import {loadFont} from './font-helper'
 
 var margin = {top: 40, right: 40, bottom: 40, left: 40},
-                      mWidth = 1200, 
-                      mHeight = 800;
+                      mWidth = 2000, 
+                      mHeight = 2000;
+var colors = ["green", "red", "cyan", "magenta", "yellow"];
 
 //Strategies for integrating React and D3:
 //"...use React to build the structure of the application, and to render traditional HTML elements,
@@ -29,17 +33,18 @@ class App extends Component {
     super(props);
     this.state = 
     {
-      /*canvas: d3.select("body").append("svg")
-                .attr("class", "container")
-                .attr("x", margin.left)
-                .attr("y", margin.top)
-                .attr("width", mWidth)
-                .attr("height", mHeight),*/
-      
+      fileResult: null,
+      fileType: "glyph"
     }
+    
+    this.input = React.createRef();
+    this.uploadClick = this.uploadClick.bind(this);
+    this.handleUpload = this.handleUpload.bind(this);
+    this.killResult = this.killResult.bind(this);
   }
 
-
+  //Be very, very careful of mixing HTML and SVG. Fundamentally incompatible for
+  //efficient rendering, and many tags won't work at all embedded reciprocally
   render() {
     return (<div className="App">
         <header className="App-header">
@@ -49,15 +54,67 @@ class App extends Component {
         <p className="App-intro">
           A tool for generating false-language symbol sets from font files.
         </p>
+        <input type="file" ref={this.input} onChange={this.handleUpload} 
+                style={{display: "none"}}/>
         <svg  className="container"
               x={margin.left}
               y={margin.top}
               width={mWidth}
               height={mHeight}>
           
-        <Orthographer name="draw" x={margin.left} y={margin.top}/>
+        <Orthographer name="draw" x={margin.left} y={margin.top} color={colors[0]}
+                      uploadClick={this.uploadClick}  
+                      fileResult={this.state.fileResult}
+                      fileType={this.state.fileType}
+                      killResult={this.killResult}/>
+        
         </svg>    
       </div>);
+  }
+
+  uploadClick = function()
+  {
+    if(d3.select(this.input.current)._groups[0][0].value != null)
+      d3.select(this.input.current)._groups[0][0].value = "";  
+    this.input.current.click();
+  }
+
+  setTextResult = function(text)
+  {
+    this.setState({fileResult: text, fileType: "glyph"});
+  }
+
+  setOpentypeResult = function(font)
+  {
+    this.setState({fileResult: font, fileType: "font"});
+  }
+
+  killResult = function()
+  {
+    this.setState({fileResult: null, fileType: "glyph"}); 
+  }
+
+  handleUpload = function(event)
+  {
+    var _this = this;
+    var filename = this.input.current.files[0].name;
+    var filetype = filename.substr(-4, 4);
+    
+    if(filetype === '.ttf' || filetype === '.otf')
+    {
+      var font = loadFont(filename, this);
+    }
+    else if(filetype === '.txt')
+    {
+      if(window.FileReader)
+      {
+        var reader = new FileReader();
+        reader.onloadend = function (ev) { _this.setTextResult(ev.target.result); };
+        reader.readAsText(this.input.current.files[0]);
+      }
+    }
+    else
+      console.log("Please submit opentype or trutype fonts, or a glyph txt file");
   }
 }
 
