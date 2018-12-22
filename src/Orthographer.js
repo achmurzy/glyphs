@@ -252,7 +252,7 @@ export default class Orthographer extends React.Component
 
 	generateTrainingData = function()
 	{
-		var train = []
+		/*var train = []
 		var size = this.generator.trainingDataSize;
 		for(var i = 0; i < size; i++)
 		{
@@ -260,6 +260,19 @@ export default class Orthographer extends React.Component
 		  train.push.apply(train, newGlyph);
 		}
 		var dataString = JSON.stringify(train);
-		download(dataString, this.props.name + "_train.txt");
+		download(dataString, this.props.name + "_train.txt");*/
+		fetch('http://localhost:5000/get_glyph', 
+      {method: 'GET', 
+      headers: {"Access-Control-Allow-Origin": "*",
+  				'content-type': 'application/json'}})
+    .then(results => 
+    { 
+      return results.json(); 
+    }).then(data => 
+      {
+        console.log(data);
+        //Unclear if this works
+        //setTextResult(data);
+      });
 	}
 }	

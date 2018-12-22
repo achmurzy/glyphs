@@ -1,7 +1,6 @@
 TO-DO:
 -Add 'continue' functionality to glyphsFull button to browse entirety of font file
--Add start, end control metadata to font glyphs. May need to back-compute offsets
-to recreate the stroke abstraction
+-Add start, end control metadata to font glyphs. May need to back-compute offsets to recreate the stroke abstraction
 -Make sure font glyphs export appropriately as our machine-readable format
 -Building alphabet to font file (rabbit-hole regarding proper intialization of metadata)
 

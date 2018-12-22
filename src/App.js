@@ -109,12 +109,45 @@ class App extends Component {
       if(window.FileReader)
       {
         var reader = new FileReader();
-        reader.onloadend = function (ev) { _this.setTextResult(ev.target.result); };
+        //reader.onloadend = function (ev) { _this.setTextResult(ev.target.result); };
+        reader.onloadend = function (ev) { _this.sendGlyphs(ev.target.result); };
         reader.readAsText(this.input.current.files[0]);
       }
     }
     else
       console.log("Please submit opentype or trutype fonts, or a glyph txt file");
+  }
+
+  fetchGlyphs()
+  {
+    fetch('http://localhost:5000/get_glyph', 
+      {method: 'GET', 
+      headers: {"Access-Control-Allow-Origin": "*"}})
+    .then(results => 
+    { 
+      return results.json(); 
+    }).then(data => 
+      {
+        console.log(data);
+        //Unclear if this works
+        //setTextResult(data);
+      });
+  }
+
+  sendGlyphs(glyphs)
+  {
+    console.log(glyphs);
+    fetch('http://localhost:5000/store_glyph', 
+      {method: 'POST',
+      body: glyphs, 
+      headers: {"Access-Control-Allow-Origin": "*",
+                "Content-Type": 'application/json'}})
+    .then(response => 
+    { 
+      return response; 
+    }).then(response => 
+      console.log('Success:', JSON.stringify(response)))
+      .catch(error => console.error('Error:', error));
   }
 }
 
