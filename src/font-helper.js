@@ -4,10 +4,11 @@ var opentype = require('opentype.js')
 //The tables that should have a unique copy per font are those that are used 
 //by the system in identifying the font and its character mapping, including 
 //'cmap', 'name', and OS/2. 
+
 //Basically, we need a way to extract the 'unique' glyphs for a given font,
 //i.e. the symbols that drew us to it in the first place.
-//Some kind of brute force approach mapping Unicode ranges based on language
-//might be most expedient. Remember your goal: learning font styles
+
+
 export function loadFont(fontName, app)
 {
   console.log(fontName);

@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 
 import Slider from './Slider';
 import Toggle from './Toggle';
-import Button from './Button';
+import GlyphButton from './GlyphButton';
 import {GLYPH_SCALE} from './Orthographer'
 
 //This class will need to be refactored as a series of input components defining
@@ -82,12 +82,12 @@ export default class DrawParameters extends React.Component
                     min={1} max={100} valueFunction={this.trainingData} name="Training Data Size"/>
 
                 <text x={this.props.x} y={this.props.y+this.props.height+40} style={{font: "12px sans-serif"}}>Download glyph data</text>
-                <Button x={this.props.x} y={this.props.y+this.props.height+50} boxScale={this.props.width/2}
+                <GlyphButton className="Panel-button" x={this.props.x} y={this.props.y+this.props.height+50} boxScale={this.props.width/2}
                     clickFunction={this.props.generateTrainingData}/>
 
                 <text x={this.props.x + (this.props.width/1.5)} y={this.props.y+this.props.height+40} style={{font: "12px sans-serif"}}>Upload glyph data</text>
-                <Button x={this.props.x+this.props.width/1.5} y={this.props.y+this.props.height+50} boxScale={this.props.width/2}
-                        clickFunction={this.props.uploadClick}/>
+                <GlyphButton className="Panel-button" x={this.props.x+this.props.width/1.5} y={this.props.y+this.props.height+50} 
+                        boxScale={this.props.width/2} clickFunction={this.props.uploadClick}/>
             </g>
             );
     }

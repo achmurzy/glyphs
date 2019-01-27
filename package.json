@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "bootstrap": "^4.2.1",
     "d3": "5.7.0",
     "fine-uploader": "^5.16.2",
     "immutability-helper": "^2.8.1",
     "opentype.js": "^0.10.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
+    "react-router": "^4.3.1",
+    "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.5",
+    "reactstrap": "^7.0.2",
     "victor": "^1.1.0"
   },
   "scripts": {

@@ -77,7 +77,6 @@ export default class Generator
 			pathList.push(newPath);
 			addContour(newPath, glyphPath);
 		}
-
 		var glyph = new opentype.Glyph(
 		{
 			name: 'glyph '+counter,

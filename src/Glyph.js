@@ -40,6 +40,7 @@ export default class Glyph extends Component
               return interpolateTransform(t, startTransform, endTransform);
             };
           });
+          
     if(this.props.inspecting)
     {
       groupElement.selectAll("circle.start")

@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 
 import Panel from './Panel'
 import DrawParameters from './DrawParameters'
-import Button from './Button'
+import GlyphButton from './GlyphButton'
 import Generator from './generator'
 import {glyphToStrokes, alphabetize } from './glyph-helper'
 import {download, fontGlyphsToStrokes} from './font-helper'
@@ -166,7 +166,7 @@ export default class Orthographer extends React.Component
 		            uploadClick={this.props.uploadClick}
 		          />
 		          {this.glyphsFull() && 
-		          	<Button ref={this.fullButton} 
+		          	<GlyphButton ref={this.fullButton} 
 		          			x={this.props.x+PANEL_WIDTH-BOX_SCALE} y={this.props.y-BOX_SCALE/4} 
 		          			boxScale={BOX_SCALE} clickFunction={this.fullButtonClick}/>}
 		          	<Panel 
@@ -250,9 +250,52 @@ export default class Orthographer extends React.Component
 		this.timer = d3.interval(this.timeCall, GENERATION_RATE);
 	}
 
+	//Creates training data in a JSON format for processing server-side.
+	//Created by JSON stringify on the raw glyph generator sequence data, which is not a proper object model
+	//Rather, it is a string of stroke symbols followed by 2D object coordinates when appropriate
+	//We figured that a 'flat' representation would let us quickly begin training, but we will want many subsets
+	//of models an an organized way to handle metadata for training combinations of symbol sets
+	//Dealing with custom alphabets as font files will be a necessity for staying organized
+
+	//We could use Google's glyph representations following Quick, Draw!
+	//At the lowest level we are already using the opentype Glyph class to represent glyphs
+
+	//We would prefer a representation like the following:
+	/*	{
+			alphabet:
+			{
+				glyphs: [ ...
+				{
+					name: 'glyph '+counter,
+	        		unicode: counter,
+	        		index: counter,
+	        		advanceWidth: GLYPH_SCALE,
+	        		path: [ ...
+					{
+						type: 'M' | 'L' | 'Q' | 'C'
+						x:
+						y:
+						x1:
+						y1:
+						x2:
+						y2:		
+						}... ]
+					glyph metadata...
+				
+				}... ]
+
+				alphabet metadata...
+			}
+		}
+		This needs to change to using our render-able Glyph representations, and generate training data as 
+		unique alphabets representing areas of the parameter space. We need to store these parameters along with
+		the glyphs themselves. Alphabet panels should expect to read in this representation, whereas Orthographers
+		export alphabets. We need to think much more carefully about how to associate glyphs with the parameters that
+		generated them. We also need to think about how parsing font files will fit into this representation framework
+	*/
 	generateTrainingData = function()
 	{
-		/*var train = []
+		var train = []
 		var size = this.generator.trainingDataSize;
 		for(var i = 0; i < size; i++)
 		{
@@ -260,8 +303,8 @@ export default class Orthographer extends React.Component
 		  train.push.apply(train, newGlyph);
 		}
 		var dataString = JSON.stringify(train);
-		download(dataString, this.props.name + "_train.txt");*/
-		fetch('http://localhost:5000/get_glyph', 
+		download(dataString, this.props.name + "_train.txt");
+		/*fetch('http://localhost:5000/get_glyph', 
       {method: 'GET', 
       headers: {"Access-Control-Allow-Origin": "*",
   				'content-type': 'application/json'}})
@@ -273,6 +316,6 @@ export default class Orthographer extends React.Component
         console.log(data);
         //Unclear if this works
         //setTextResult(data);
-      });
+      });*/
 	}
 }	
