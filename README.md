@@ -40,20 +40,23 @@ FEATURES:
 -Building alphabet to font file
 -Various quality-of-life animations for visualizing stroke order, etc.
 -Explore embedding Unity builds with package 'react-unity-webgl'
--
+-Add videos of mobile apps, and links to where people can find those
 
 TO-DO:
 -Find JSON format for every level of representation:
 	-Alphabet
 	-Glyph - change training glyph generator to export richer glyph representation
 
--Write a function to load a glyph from the server and visualize it in a panel
+-Write a function to load a glyph from the server and visualize it in a panel. Change visualization formatting for the normalized, standardized RNN-training formats
 
 -Write a parser that can extract 'relevant' glyphs from an arbitrary font file. How do we know which indices contain symbols for which the font was created?
+	-Feed in data from the font header to an API that can determine the relevant ranges - part of a pre-processing step that might be better on the back-end (because we're only doing this to make a font database, essentially)
+
 -Some kind of brute force approach mapping Unicode ranges based on language might be most expedient. Remember your goal: learning font styles. How can we be sure all fonts are unicode compliant? Probably just visual inspection and data cleaning to ensure we have the symbols we think we do. Other tools exist for this:
 https://fontdrop.info/
 There are ways to detect support for languages by indexing the glyph space. Find out how:
-https://www.alphabet-type.com/tools/charset-checker/	Contains an API for checking - this is probably our go-to, might be best performed on the backend with python packages
+https://www.alphabet-type.com/tools/charset-checker/	
+Contains an API for checking - this is probably our go-to, might be best performed on the backend with python packages
 
 -What if we just downloaded a gigantic Unicode representation, even though this would represent a single styling? We could map styles based on this.
 See: https://stackoverflow.com/questions/34732718/why-isnt-there-a-font-that-contains-all-unicode-glyphs
@@ -61,6 +64,10 @@ Best we can do:
 https://www.google.com/get/noto/
 https://github.com/adobe-fonts
 https://www.fontspace.com/category/unicode
+
+## A first approach at deep learning fonts and some romanized fonts
+https://github.com/erikbern/deep-fonts
+https://drive.google.com/file/d/0B0GtwTQ6IF9AU3NOdzFzUWZ0aDQ/view
 
 DONE:
 --Add content from ember canopy routes to your site
