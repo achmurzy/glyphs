@@ -114,10 +114,19 @@ export default class Orthographer extends React.Component
 			        }
       			});
 			}
+			else if(this.props.fileType === "JSON")
+			{
+				console.log(this.props.fileResult);
+				this.fileGlyphs = this.generator.parseJSON(this.props.fileResult, this.glyphCounter);
+				this.setState({glyphData: [], expandedElement: Number.MAX_SAFE_INTEGER}, () => 
+      			{
+      				for(var i =0;i<this.fileGlyphs.length;i++)
+			        	{this.addGlyph(this.fileGlyphs[i]);}
+      			});
+			}
 			else //font
 			{
 				this.font = this.props.fileResult;
-				console.log(this.font);
 				this.fileGlyphs = fontGlyphsToStrokes(this.font, this.fontIndex, this.glyphCount, this.props.color);
 				this.setState({glyphData: [], expandedElement: Number.MAX_SAFE_INTEGER}, () => 
       			{
@@ -164,6 +173,7 @@ export default class Orthographer extends React.Component
 		            valueChange={this.changeGeneratorValue}
 		            generateTrainingData={this.generateTrainingData}
 		            uploadClick={this.props.uploadClick}
+		            fetchGlyphs={this.props.fetchGlyphs}
 		          />
 		          {this.glyphsFull() && 
 		          	<GlyphButton ref={this.fullButton} 

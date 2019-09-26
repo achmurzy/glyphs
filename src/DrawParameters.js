@@ -88,6 +88,10 @@ export default class DrawParameters extends React.Component
                 <text x={this.props.x + (this.props.width/1.5)} y={this.props.y+this.props.height+40} style={{font: "12px sans-serif"}}>Upload glyph data</text>
                 <GlyphButton className="Panel-button" x={this.props.x+this.props.width/1.5} y={this.props.y+this.props.height+50} 
                         boxScale={this.props.width/2} clickFunction={this.props.uploadClick}/>
+
+                <text x={this.props.x + (this.props.width/1.5)} y={this.props.y+this.props.height+120} style={{font: "12px sans-serif"}}>Fetch server glyphs</text>
+                <GlyphButton className="Panel-button" x={this.props.x+this.props.width/1.5} y={this.props.y+this.props.height+130} 
+                        boxScale={this.props.width/2} clickFunction={this.props.fetchGlyphs}/>
             </g>
             );
     }

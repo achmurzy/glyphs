@@ -43,14 +43,18 @@ FEATURES:
 -Add videos of mobile apps, and links to where people can find those
 
 TO-DO:
+-Hard-code the visualizer for accepting input in the format of the AI module's (normalized for box sizes)
+
+-Change front end-glyph representation to allow editing 'paths' rather than the abstraction of 'strokes' (lines, quads, cubics). This will lead to a much more
+fine-grained representation to match the level of detail in font glyphs. Automatically generating these types of closed curves poses a separate problem. We're focusing on human-generated font data
+
+-Work on a mechanism for loading AI-generated symbols from the back-end into and alphabet to be re-packaged (with specified metadata) and sent to the backend for font file generation.
+	-See below Alphabet JSON specification
+
 -Find JSON format for every level of representation:
 	-Alphabet
 	-Glyph - change training glyph generator to export richer glyph representation
-
--Write a function to load a glyph from the server and visualize it in a panel. Change visualization formatting for the normalized, standardized RNN-training formats
-
--Write a parser that can extract 'relevant' glyphs from an arbitrary font file. How do we know which indices contain symbols for which the font was created?
-	-Feed in data from the font header to an API that can determine the relevant ranges - part of a pre-processing step that might be better on the back-end (because we're only doing this to make a font database, essentially)
+	-Font - DONE: can import font symbols from the backend
 
 -Some kind of brute force approach mapping Unicode ranges based on language might be most expedient. Remember your goal: learning font styles. How can we be sure all fonts are unicode compliant? Probably just visual inspection and data cleaning to ensure we have the symbols we think we do. Other tools exist for this:
 https://fontdrop.info/
@@ -78,5 +82,10 @@ DONE:
 	-Change remaining custom UI elements over to reactstrap (Button, Input, Toggles, Sliders do something clean and custom)
 		-Pull UI elements out of the SVG rendering element and make an overlay
 		--NOPENOPENOPENOPE dont add things that dont change functionality - aint broke dont fix it
+
+--Write a function to load a glyph from the server and visualize it in a panel. Change visualization formatting for the normalized, standardized RNN-training formats
+-Write a parser that can extract 'relevant' glyphs from an arbitrary font file. How do we know which indices contain symbols for which the font was created?
+-Feed in data from the font header to an API that can determine the relevant ranges - part of a pre-processing step that might be better on the back-end (because we're only doing this to make a font database, essentially) - NOTE: this was handled on the backend using UNICODE codepoints/blocks, which define symbol set semantics (e.g. language groups, etc.)
+
 
 The purpose of this web framework should be a flexible interactive tool for creating false languages. The basis of this flexibility is the asynchronous nature of the front and back-end, where we can continuously iterate modeling our training data, which is itself continuously iterated on the front-end. These two workflows can be performed almost simultaneously

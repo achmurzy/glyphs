@@ -156,10 +156,11 @@ export default class Glyph extends Component
     			
     				{strokes.map((stroke, i) =>
     					//{beware of curly braces in map expressions
-    						<Stroke key={i} className="undrawn" commands={strokeInterpret(stroke.contours, this.props.xScale, this.props.yScale)} 
-    								drawSpeed={this.props.drawSpeed} color={this.props.inspecting ? stroke.color : this.props.color}/>
+    						<Stroke key={i} className="undrawn" commands={this.props.backend ? stroke.path.toString() : strokeInterpret(stroke.contours, this.props.xScale, this.props.yScale)} 
+    								clockwise={stroke.clockwise} drawSpeed={this.props.drawSpeed} color={this.props.inspecting ? stroke.color : this.props.color}/>
     					//}you need to explicitly specify a return value if you use them
     				)}
+
             {this.props.inspecting && //May need to factor these into stroke component, may not
               [strokes.map((stroke, i) => 
                 <g key={i}>

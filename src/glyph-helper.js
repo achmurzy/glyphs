@@ -8,6 +8,8 @@ var opentype = require('opentype.js')
 var GLYPH_SCALE = 1024;
 //A large number of confusing utility functions for processing and modifying glyph data      
 
+//Turns our old symbolic format into a set of atomic draw commands 
+//Returns a string of d3.path() commands. 
 export function strokeInterpret(datum, scaleX, scaleY)
 {
   var path = d3.path();

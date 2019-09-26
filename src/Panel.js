@@ -56,7 +56,7 @@ export default class Panel extends Component
                       return (<Glyph key={glyph.index} index={glyph.index} name={this.props.name} transform={this.positionGlyph(i, this.props.expandedElement)} 
                       boxScale={this.props.boxScale} color={this.props.color} xScale={this.xScale} yScale={this.yScale} strokes={glyph.strokes} drawSpeed={this.props.speed} 
                       inspecting={i===this.props.expandedElement} opentypeGlyph={glyph.glyph} generator={this.props.generator} clickFunction={this.clickFunction}
-                      strokeModifier={this.props.strokeModifier}/>);
+                      backend={glyph.backend} clockwise={glyph.clockwise} strokeModifier={this.props.strokeModifier}/>);
                   }
                 )}
             </g>);

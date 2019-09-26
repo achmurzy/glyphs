@@ -86,6 +86,7 @@ export default class Generator
 	        path: glyphPath
 		});
 		glyph.strokeData = pathList;
+		glyph.backend = false;
 		return glyph;
 	}
 
@@ -359,6 +360,75 @@ export default class Generator
 		return strokeList;
 	}
 
+	//Parse JSON transfer of glyphs stored from the back-end
+	//Takes the parsed JSON and outputs a list of glyphs for rendering on the orthographer
+	parseJSON(json, counter)
+	{
+	  var count = 0;
+	  var glyphCount = counter;
+	  var currentGlyph;
+	  var pathList;
+	  var drawGlyphs = [];
+	  
+	  while(count < json.length)
+	  {
+	  	var json_glyph = json[count];
+	  	var glyphPath = new d3.path();
+	    
+	    pathList = [];
+	    
+	    for (var i = 0; i < json_glyph.contours.length; i++)
+	    {
+	    	var contour = json_glyph.contours[i];
+	    	var path = new d3.path();
+	    	var start = contour.strokes[0].points[0];
+	    	path.moveTo(start.x/50, (GLYPH_SCALE - start.y)/50);
+	    	for(var s = 0; s < contour.strokes.length; s++)
+	    	{
+	    		//Assuming strokes always loop in order
+	    		var stroke = contour.strokes[s];
+	    		var type = stroke.type;
+				
+	    		if(type === 'L')
+	    		{
+	    			var point = stroke.points[0];	
+	    			path.lineTo(point.x/50, (GLYPH_SCALE - point.y)/50);
+	    			glyphPath.lineTo(point.x, point.y);
+	    		}
+	    		else if(type === 'Q')
+	    		{
+	    			var cp = stroke.points[0];
+	    			var point = stroke.points[1];
+	    			path.quadraticCurveTo(cp.x/50, (GLYPH_SCALE - cp.y)/50, point.x/50, (GLYPH_SCALE - point.y)/50);
+	    			glyphPath.quadraticCurveTo(cp.x, cp.y, point.x, point.y);
+	    		}
+	    		else //type === 'M'
+	    		{
+	    			path.lineTo(start.x/50, (GLYPH_SCALE - start.y)/50);
+	    		}	
+	    	}
+	    	path.closePath();
+	    	pathList.push({clockwise: contour.orientation, path:path});
+	    }
+
+	    //The path list stores the strokes for separate rendering and editing
+	    currentGlyph = new opentype.Glyph(
+	        {
+	          	name: json_glyph.name,
+	              unicode: json_glyph.unicode,
+	              index: glyphCount,
+	              advanceWidth: json_glyph.advance_width,
+	              path: glyphPath
+	        });
+	    drawGlyphs.push(currentGlyph);
+	    currentGlyph.strokes = pathList;
+	    currentGlyph.backend = true;
+	    glyphCount++;
+	    count++;
+	  }
+	  return (drawGlyphs)
+	}
+
 	//Parse pseudo-JSON format output from AI modules
 	parseGlyphs(text, counter) 
 	{                                  
@@ -382,6 +452,7 @@ export default class Generator
 	              advanceWidth: GLYPH_SCALE,
 	              path: glyphPath
 	        });
+
 	      currentGlyph.strokeData = pathList;
 	      drawGlyphs.push(currentGlyph);
 	      glyphCount++;

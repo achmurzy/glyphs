@@ -27,6 +27,7 @@ class App extends Component {
     this.input = React.createRef();
     this.uploadClick = this.uploadClick.bind(this);
     this.handleUpload = this.handleUpload.bind(this);
+    this.fetchGlyphs = this.fetchGlyphs.bind(this);
     this.killResult = this.killResult.bind(this);
   }
 
@@ -48,6 +49,7 @@ class App extends Component {
           
           <Orthographer name="draw" x={margin.left} y={margin.top} color={colors[0]}
                       uploadClick={this.uploadClick}  
+                      fetchGlyphs={this.fetchGlyphs}
                       fileResult={this.state.fileResult}
                       fileType={this.state.fileType}
                       killResult={this.killResult}/>
@@ -72,6 +74,11 @@ class App extends Component {
   {
     this.setState({fileResult: font, fileType: "font"});
   }
+
+  setJSONResult = function(json)
+  {
+    this.setState({fileResult: json, fileType: "JSON"});
+  }  
 
   killResult = function()
   {
@@ -104,6 +111,7 @@ class App extends Component {
 
   fetchGlyphs()
   {
+    var _this = this;
     fetch('http://localhost:5000/get_glyph', 
       {method: 'GET', 
       headers: {"Access-Control-Allow-Origin": "*"}})
@@ -113,8 +121,8 @@ class App extends Component {
     }).then(data => 
       {
         console.log(data);
-        //Unclear if this works
-        //setTextResult(data);
+        console.log(_this);
+        _this.setJSONResult(data);
       });
   }
 
