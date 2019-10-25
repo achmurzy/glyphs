@@ -381,8 +381,7 @@ export default class Generator
 	    {
 	    	var contour = json_glyph.contours[i];
 	    	var path = new d3.path();
-	    	var start = contour.strokes[0].points[0];
-	    	path.moveTo(start.x/50, (GLYPH_SCALE - start.y)/50);
+	    	var cp = null;
 	    	for(var s = 0; s < contour.strokes.length; s++)
 	    	{
 	    		//Assuming strokes always loop in order
@@ -391,20 +390,25 @@ export default class Generator
 				
 	    		if(type === 'L')
 	    		{
-	    			var point = stroke.points[0];	
+	    			var point = stroke.point;	
 	    			path.lineTo(point.x/50, (GLYPH_SCALE - point.y)/50);
 	    			glyphPath.lineTo(point.x, point.y);
 	    		}
-	    		else if(type === 'Q')
+	    		else if(type === 'C' || type === 'Q')
 	    		{
-	    			var cp = stroke.points[0];
-	    			var point = stroke.points[1];
-	    			path.quadraticCurveTo(cp.x/50, (GLYPH_SCALE - cp.y)/50, point.x/50, (GLYPH_SCALE - point.y)/50);
-	    			glyphPath.quadraticCurveTo(cp.x, cp.y, point.x, point.y);
+	    			if(type === 'C')
+	    			{	cp = stroke.point;	}
+	    			else
+	    			{
+	    				var point = stroke.point;
+	    				path.quadraticCurveTo(cp.x/50, (GLYPH_SCALE - cp.y)/50, point.x/50, (GLYPH_SCALE - point.y)/50);
+	    				glyphPath.quadraticCurveTo(cp.x, cp.y, point.x, point.y);
+	    			}
 	    		}
-	    		else //type === 'M'
+	    		else //type === 'M' || type === 'G'
 	    		{
-	    			path.lineTo(start.x/50, (GLYPH_SCALE - start.y)/50);
+	    			var point = stroke.point;
+	    			path.moveTo(point.x/50, (GLYPH_SCALE - point.y)/50);
 	    		}	
 	    	}
 	    	path.closePath();
