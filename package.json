@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "bootstrap": "^4.2.1",
-    "d3": "5.7.0",
+    "d3": "7.6.1",
     "fine-uploader": "^5.16.2",
     "immutability-helper": "^2.8.1",
     "opentype.js": "^0.10.0",
